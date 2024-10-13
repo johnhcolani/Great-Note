@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:greate_note_app/core/widgets/splash_background.dart';
-import 'package:greate_note_app/home_feature/presentation/home_screen.dart';
-
+import 'package:greate_note_app/features/folders/presentation/screens/folder_page.dart';
+import '../../../features/notes/data/data_sources/note_local_datasource.dart';
 import 'bloc/splash_bloc.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final NoteLocalDataSource noteLocalDataSource;
+  const SplashScreen({super.key, required this.noteLocalDataSource});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -15,6 +16,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+
 
   @override
   void initState() {
@@ -52,7 +54,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       listener: (context, state) {
         if (state is SplashCompleted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) =>  const HomeScreen()),
+            MaterialPageRoute(
+                builder: (context) =>   FolderPage(
+                    noteLocalDataSource: widget.noteLocalDataSource)),
           );
         }
       },

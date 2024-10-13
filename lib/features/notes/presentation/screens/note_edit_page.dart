@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 import '../bloc/note_bloc.dart';
 import 'dart:convert';
 
@@ -49,24 +50,27 @@ class _NoteEditPageState extends State<NoteEditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit Note'),
+      appBar: GlossyAppBar(
+        title: 'Edit Note',
         actions: [
           IconButton(
             icon: Icon(Icons.save),
             onPressed: _saveNote, // Save the note when pressed
           ),
-        ],
+        ], backgroundColor: Colors.brown.withOpacity(0.3), elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: 'Title'),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Expanded(
               child: quill.QuillEditor(
                 controller: _quillController,
@@ -76,7 +80,15 @@ class _NoteEditPageState extends State<NoteEditPage> {
 
               ),
             ),
-            quill.QuillToolbar.simple(controller: _quillController), // Toolbar still basic
+            SizedBox(
+              height: 120,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SingleChildScrollView(child: quill.QuillToolbar.simple(controller: _quillController)),
+                ),
+              ),
+            ), // Toolbar still basic
           ],
         ),
       ),

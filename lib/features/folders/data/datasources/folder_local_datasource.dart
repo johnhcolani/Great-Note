@@ -17,4 +17,13 @@ class FolderLocalDataSource {
   Future<int> deleteFolder(int id) async {
     return await db.delete('folders', where: 'id = ?', whereArgs: [id]);
   }
+  // Update the folder name in the database
+  Future<void> updateFolderName(int folderId, String newName) async {
+    await db.update(
+      'folders',
+      {'name': newName},
+      where: 'id = ?',
+      whereArgs: [folderId],
+    );
+  }
 }

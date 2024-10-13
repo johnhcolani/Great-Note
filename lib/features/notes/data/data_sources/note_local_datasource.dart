@@ -29,7 +29,14 @@ class NoteLocalDataSource {
       whereArgs: [noteId],
     );
   }
-
+// Fetch notes for a specific folder
+  Future<List<Map<String, dynamic>>> getNotesForFolder(int folderId) async {
+    return await db.query(
+      'notes',
+      where: 'folder_id = ?',
+      whereArgs: [folderId],
+    );
+  }
   // Delete a note from the database
   Future<int> deleteNote(int noteId) async {
     return await db.delete(

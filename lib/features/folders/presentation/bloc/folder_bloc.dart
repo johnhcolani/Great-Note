@@ -47,5 +47,14 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
         emit(FolderError('Failed to delete folder'));
       }
     });
+    on<UpdateFolderName>((event, emit) async {
+      try {
+        await localDataSource.updateFolderName(event.folderId, event.newName);
+        // Reload folders after updating the folder name
+        add(LoadFolders());
+      } catch (e) {
+        emit(const FolderError('Failed to update folder name'));
+      }
+    });
   }
 }

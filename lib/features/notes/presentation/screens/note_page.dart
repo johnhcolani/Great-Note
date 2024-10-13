@@ -1,90 +1,165 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 
+import '../../../folders/presentation/bloc/folder_bloc.dart';
+import '../../../folders/presentation/bloc/folder_event.dart';
+import '../../../../core/widgets/custom_floating_action_button.dart';
 import '../bloc/note_bloc.dart';
 import 'note_edit_page.dart';
 
-class NotePage extends StatelessWidget {
+class NotePage extends StatefulWidget {
   final int folderId;
+  final String folderName;
 
-  NotePage({required this.folderId});
+  NotePage({required this.folderId, required this.folderName});
+
+  @override
+  State<NotePage> createState() => _NotePageState();
+}
+
+class _NotePageState extends State<NotePage> {
+  late String _folderName;
+
+  @override
+  void initState() {
+    super.initState();
+    _folderName = widget.folderName;
+  }
 
   @override
   Widget build(BuildContext context) {
     // Dispatch LoadNotes event when the page is opened
-    context.read<NoteBloc>().add(LoadNotes(folderId: folderId));
+    context.read<NoteBloc>().add(LoadNotes(folderId: widget.folderId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Notes'),
+      extendBodyBehindAppBar: true,
+      appBar: GlossyAppBar(
+        backgroundColor: Colors.transparent,
+        title: '$_folderName',
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {
+              _showEditFolderDialog(context);
+            },
+          ),
+        ], elevation: 0,
       ),
-      body: BlocBuilder<NoteBloc, NoteState>(
-        builder: (context, state) {
-          if (state is NoteLoading) {
-            return Center(child: CircularProgressIndicator());
-          } else if (state is NotesLoaded) {
-            return ListView.builder(
-              itemCount: state.notes.length,
-              itemBuilder: (context, index) {
-                final note = state.notes[index];
-                String plainText ='';
-                try {
-                  // Try to parse the description as JSON
-                final List<dynamic> content = jsonDecode(note['description']) as List<dynamic>;
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/pure_background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: BlocBuilder<NoteBloc, NoteState>(
+          builder: (context, state) {
+            if (state is NoteLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is NotesLoaded) {
+              return ListView.builder(
+                itemCount: state.notes.length,
+                itemBuilder: (context, index) {
+                  final note = state.notes[index];
+                  String plainText = '';
 
-                final quill.Document doc = quill.Document.fromJson(content);
-                 plainText = doc.toPlainText().trim(); // Convert Delta to plain text
-                } catch (e) {
-                  // Handle the error (e.g., if the description is not valid JSON)
-                  print('Error parsing JSON: $e');
-                  plainText = note['description']; // Fallback to displaying the raw description
-                }
+                  try {
+                    // Try to parse the description as JSON
+                    final List<dynamic> content = jsonDecode(note['description']) as List<dynamic>;
+                    final quill.Document doc = quill.Document.fromJson(content);
+                    plainText = doc.toPlainText().trim(); // Convert Delta to plain text
+                  } catch (e) {
+                    // Handle error if description is not valid JSON
+                    plainText = note['description'];
+                  }
 
-                return Card(
-                  child: ListTile(
-                    title: Text(note['title']),
-                    //subtitle: Text(plainText),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        context.read<NoteBloc>().add(DeleteNote(
-                          noteId: note['id'],
-                          folderId: folderId,
-                        ));
+                  return Card(
+                    child: ListTile(
+                      title: Text(note['title']),
+                      // subtitle: Text(plainText),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          _showDeleteConfirmationDialog(context, note['id']);
+                        },
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => NoteEditPage(
+                              folderId: widget.folderId,
+                              noteId: note['id'],
+                              initialTitle: note['title'],
+                              initialDescription: note['description'],
+                            ),
+                          ),
+                        );
                       },
                     ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => NoteEditPage(
-                            folderId: folderId,
-                            noteId: note['id'],
-                            initialTitle: note['title'],
-                            initialDescription: note['description'],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            );
-          } else if (state is NoteError) {
-            return Center(child: Text(state.message));
-          } else {
-            return Center(child: Text('No notes found'));
-          }
-        },
+                  );
+                },
+              );
+            } else if (state is NoteError) {
+              return Center(child: Text(state.message));
+            } else {
+              return Center(child: Text('No notes found'));
+            }
+          },
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: GlossyRectangularButton(
         onPressed: () {
           _showAddNoteDialog(context);
         },
-        child: Icon(Icons.add),
+        icon: Icons.add,
+
       ),
+    );
+  }
+
+  // Method to show a dialog for editing the folder name
+  void _showEditFolderDialog(BuildContext context) {
+    final _folderNameController = TextEditingController(text: _folderName);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Folder Name'),
+          content: TextFormField(
+            controller: _folderNameController,
+            decoration: InputDecoration(labelText: 'Folder Name'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: Text('Save'),
+              onPressed: () {
+                final newFolderName = _folderNameController.text.trim();
+                if (newFolderName.isNotEmpty) {
+                  // Update the folder name in the Bloc
+                  context.read<FolderBloc>().add(UpdateFolderName(
+                    folderId: widget.folderId,
+                    newName: newFolderName,
+                  ));
+                  setState(() {
+                    _folderName = newFolderName; // Update the folder name locally
+                  });
+                  Navigator.of(context).pop(); // Close the dialog
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -108,7 +183,7 @@ class NotePage extends StatelessWidget {
               onPressed: () {
                 context.read<NoteBloc>().add(DeleteNote(
                   noteId: noteId,
-                  folderId: folderId,
+                  folderId: widget.folderId,
                 ));
                 Navigator.of(context).pop(); // Close dialog
               },
@@ -157,7 +232,7 @@ class NotePage extends StatelessWidget {
                 if (title.isNotEmpty && description.isNotEmpty) {
                   context.read<NoteBloc>().add(
                     AddNote(
-                      folderId: folderId,
+                      folderId: widget.folderId,
                       title: title,
                       description: description,
                     ),
