@@ -32,7 +32,7 @@ class GlossyAppBar extends StatelessWidget implements PreferredSizeWidget {
                   bottom: Radius.circular(0), // Same rounded corners
                 ),
                 border: Border.all(
-                  color: Colors.white, // White border for gloss
+                  color: Colors.white.withOpacity(0.5), // White border for gloss
                   width: 1.0,
                 ),
               ),
