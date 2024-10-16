@@ -7,11 +7,11 @@ class GlossyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool centerTitle;
 
   const GlossyAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.actions = const [],
     this.centerTitle = true, required Color backgroundColor, required int elevation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +27,11 @@ class GlossyAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Container(
               height: 200,
               decoration: BoxDecoration(
-                color: Colors.brown.withOpacity(0.3), // Glossy effect with opacity
+                color: Colors.black.withOpacity(0.3), // Glossy effect with opacity
                 borderRadius: const BorderRadius.vertical(
                   bottom: Radius.circular(0), // Same rounded corners
                 ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.5), // White border for gloss
-                  width: 1.0,
-                ),
+
               ),
             ),
           ),

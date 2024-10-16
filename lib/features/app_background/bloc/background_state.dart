@@ -1,6 +1,18 @@
 part of 'background_bloc.dart';
 
-@immutable
-sealed class BackgroundState {}
 
-final class BackgroundInitial extends BackgroundState {}
+abstract class BackgroundState {}
+
+class BackgroundInitial extends BackgroundState {}
+
+class BackgroundLoaded extends BackgroundState {
+  final String imagePath; // Path to the selected image
+
+  BackgroundLoaded(this.imagePath);
+}
+
+class BackgroundError extends BackgroundState {
+  final String message;
+
+  BackgroundError(this.message);
+}

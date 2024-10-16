@@ -21,7 +21,7 @@ class FolderLoading extends FolderState{
 class FolderLoaded extends FolderState{
   final List<Map<String, dynamic>> folders;
 
-  FolderLoaded(this.folders);
+  const FolderLoaded(this.folders);
   @override
   // TODO: implement props
   List<Object?> get props =>[folders] ;

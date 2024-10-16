@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:greate_note_app/core/widgets/splash_background.dart';
 import 'package:greate_note_app/features/folders/presentation/screens/folder_page.dart';
-import '../../../features/notes/data/data_sources/note_local_datasource.dart';
+import '../../../notes/data/data_sources/note_local_datasource.dart';
 import 'bloc/splash_bloc.dart';
 
 class SplashScreen extends StatefulWidget {

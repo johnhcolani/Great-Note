@@ -5,24 +5,31 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:greate_note_app/core/theme/theme_bloc.dart';
 import 'package:greate_note_app/core/widgets/custom_floating_action_button.dart';
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
+import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
+import '../../../app_background/app_background.dart';
 import '../../../notes/data/data_sources/note_local_datasource.dart';
 import '../../../notes/presentation/screens/note_page.dart';
 import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
 class FolderPage extends StatelessWidget {
+  
   final NoteLocalDataSource
       noteLocalDataSource; // Pass the data source to check notes
   const FolderPage({super.key, required this.noteLocalDataSource});
 
+
+
   @override
   Widget build(BuildContext context) {
+    final screenwidth = MediaQuery.of(context).size.width;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: GlossyAppBar(
         title:
-          'Welcome to Folder Page',
+          'Folder Page',
 
 
         actions: [
@@ -30,10 +37,16 @@ class FolderPage extends StatelessWidget {
             builder: (context, state) {
               // Show moon icon for dark mode and sun icon for light mode
               return IconButton(
-                icon: Icon(
-                  state.themeMode == ThemeMode.dark
-                      ? Icons.nights_stay_outlined // Moon icon for dark mode
-                      : Icons.wb_sunny, // Sun icon for light mode
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+
+                  child: Icon(
+                    state.themeMode == ThemeMode.dark
+                        ? Icons.nights_stay_outlined // Moon icon for dark mode
+                        : Icons.wb_sunny, // Sun icon for light mode
+                    key: ValueKey(state.themeMode),
+                  ),
                 ),
                 onPressed: () {
                   // Toggle the theme when the button is pressed
@@ -42,88 +55,92 @@ class FolderPage extends StatelessWidget {
               );
             },
           ),
+          IconButton(onPressed: (){
+context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
+          }, icon: const Icon(Icons.image))
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          image: const DecorationImage(
-            image: AssetImage('assets/images/pure_background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: BlocBuilder<FolderBloc, FolderState>(
-          builder: (context, state) {
-            if (state is FolderLoading) {
-              return const Center(
-                  child: SizedBox(
-                      height: 40,
-                      width: 40,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                      )));
-            } else if (state is FolderLoaded) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8),
-                  itemCount: state.folders.length,
-                  itemBuilder: (context, index) {
-                    final folder = state.folders[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => NotePage(
-                                folderId: folder['id'],
-                                folderName: folder['name']),
-                          ),
-                        );
-                      },
-                      child: Stack(
-                        children: [
-                          // BackdropFilter to apply the blur effect
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                16), // Same border radius as the container
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                  sigmaX: 15.0, sigmaY: 15.0), // Blurry effect
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.white, width: 1),
-                                    color: Colors.white.withOpacity(
-                                        0.2), // Semi-transparent color overlay
-                                    borderRadius: BorderRadius.circular(16),
+      body: Stack(
+        children: [
+          const AppBackground(),
+            Container(
+              color: isDarkMode ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.1),
+            ),
+            BlocBuilder<FolderBloc, FolderState>(
+              builder: (context, state) {
+                print('Screen width is : $screenwidth');
+                if (state is FolderLoading) {
+                  return const Center(
+                      child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          )));
+                } else if (state is FolderLoaded) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GridView.builder(
+                      gridDelegate:  const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16),
+                      itemCount: state.folders.length,
+                      itemBuilder: (context, index) {
+                        final folder = state.folders[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => NotePage(
+                                    folderId: folder['id'],
+                                    folderName: folder['name']),
+                              ),
+                            );
+                          },
+                          child: Stack(
+                            children: [
+                              // BackdropFilter to apply the blur effect
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                    16), // Same border radius as the container
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                      sigmaX: 15.0, sigmaY: 15.0), // Blurry effect
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.white, width: 2),
+                                        color: Colors.white.withOpacity(
+                                            0.2), // Semi-transparent color overlay
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                          // The actual folder card content
+                              // The actual folder card content
 
-                          buildCard(folder, context),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              );
-            } else if (state is FolderError) {
-              return Center(child: Text(state.message));
-            } else {
-              return const Center(child: Text('No folders found'));
-            }
-          },
-        ),
+                              buildCard(folder, context),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                } else if (state is FolderError) {
+                  return Center(child: Text(state.message));
+                } else {
+                  return const Center(child: Text('No folders found'));
+                }
+              },
+            ),
+
+        ],
       ),
       floatingActionButton: GlossyRectangularButton(
         onPressed: () {
@@ -137,7 +154,7 @@ class FolderPage extends StatelessWidget {
   Card buildCard(Map<String, dynamic> folder, BuildContext context) {
     return Card(
       color: Color(int.parse(folder['color']))
-          .withOpacity(0.2), // Semi-transparent folder color
+          .withOpacity(0.5), // Semi-transparent folder color
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -183,7 +200,17 @@ class FolderPage extends StatelessWidget {
                     future: noteLocalDataSource.getNotesForFolder(folder['id']),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
+                        return Align(
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            height: 30,
+                            width: 30,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
                       } else if (snapshot.hasError) {
                         return const Text('Error loading notes');
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -237,18 +264,18 @@ class FolderPage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Delete Folder'),
+          title: const Text('Delete Folder'),
           content:
               Text('Are you sure you want to delete the folder "$folderName"?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop(false); // Cancel the deletion
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: const Text('Delete'),
               onPressed: () {
                 Navigator.of(context).pop(true); // Confirm the deletion
               },
@@ -288,8 +315,8 @@ class FolderPage extends StatelessWidget {
 
 // Method to show the Add Folder dialog
 void _showAddFolderDialog(BuildContext context) {
-  final _folderNameController = TextEditingController();
-  Color _selectedColor = Colors.blue; // Default color
+  final folderNameController = TextEditingController();
+  Color selectedColor = Colors.blue; // Default color
 
   showDialog(
     context: context,
@@ -302,7 +329,7 @@ void _showAddFolderDialog(BuildContext context) {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: _folderNameController,
+                  controller: folderNameController,
                   decoration: const InputDecoration(
                     labelText: 'Folder Name',
                   ),
@@ -312,24 +339,24 @@ void _showAddFolderDialog(BuildContext context) {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _colorOption(Colors.red, _selectedColor, () {
+                    _colorOption(Colors.red, selectedColor, () {
                       setState(() {
-                        _selectedColor = Colors.red;
+                        selectedColor = Colors.red;
                       });
                     }),
-                    _colorOption(Colors.green, _selectedColor, () {
+                    _colorOption(Colors.green, selectedColor, () {
                       setState(() {
-                        _selectedColor = Colors.green;
+                        selectedColor = Colors.green;
                       });
                     }),
-                    _colorOption(Colors.blue, _selectedColor, () {
+                    _colorOption(Colors.blue, selectedColor, () {
                       setState(() {
-                        _selectedColor = Colors.blue;
+                        selectedColor = Colors.blue;
                       });
                     }),
-                    _colorOption(Colors.yellow, _selectedColor, () {
+                    _colorOption(Colors.yellow, selectedColor, () {
                       setState(() {
-                        _selectedColor = Colors.yellow;
+                        selectedColor = Colors.yellow;
                       });
                     }),
                   ],
@@ -346,13 +373,13 @@ void _showAddFolderDialog(BuildContext context) {
               ElevatedButton(
                 child: const Text('Add'),
                 onPressed: () {
-                  final folderName = _folderNameController.text.trim();
+                  final folderName = folderNameController.text.trim();
                   if (folderName.isNotEmpty) {
                     // Store the color as an integer value
                     context.read<FolderBloc>().add(
                           AddFolder(
                             name: folderName,
-                            color: _selectedColor.value
+                            color: selectedColor.value
                                 .toString(), // Store color as int value string
                           ),
                         );

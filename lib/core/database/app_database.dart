@@ -31,4 +31,12 @@ class AppDatabase {
       version: 1,
     );
   }
+  void _createDatabase(Database db, int version) async {
+    await db.execute('''
+    CREATE TABLE backgrounds (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      image_path TEXT
+    )
+  ''');
+  }
 }

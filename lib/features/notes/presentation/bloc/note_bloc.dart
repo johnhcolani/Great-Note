@@ -20,7 +20,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         emit(NotesLoaded(notes));
       } catch (e) {
         print('Error loading notes: $e');
-        emit(NoteError('Failed to load notes'));
+        emit(const NoteError('Failed to load notes'));
       }
     });
 
@@ -35,7 +35,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         add(LoadNotes(folderId: event.folderId)); // Reload notes after adding
       } catch (e) {
         print('Error adding note: $e');
-        emit(NoteError('Failed to add note'));
+        emit(const NoteError('Failed to add note'));
       }
     });
 
@@ -46,7 +46,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         add(LoadNotes(folderId: event.folderId)); // Reload notes after deleting
       } catch (e) {
         print('Error deleting note: $e');
-        emit(NoteError('Failed to delete note'));
+        emit(const NoteError('Failed to delete note'));
       }
     });
 
@@ -60,7 +60,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         add(LoadNotes(folderId: event.folderId)); // Reload notes after updating
       } catch (e) {
         print('Error updating note: $e');
-        emit(NoteError('Failed to update note'));
+        emit(const NoteError('Failed to update note'));
       }
     });
   }

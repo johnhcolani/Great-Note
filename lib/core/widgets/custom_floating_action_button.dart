@@ -8,8 +8,8 @@ class GlossyRectangularButton extends StatelessWidget {
   const GlossyRectangularButton({
     required this.onPressed,
     required this.icon,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class GlossyRectangularButton extends StatelessWidget {
                   color: Colors.black.withOpacity(0.2), // Soft shadow effect
                   blurRadius: 10,
                   spreadRadius: 1,
-                  offset: Offset(0, 4), // Slight shadow below the button
+                  offset: const Offset(0, 4), // Slight shadow below the button
                 ),
               ],
             ),

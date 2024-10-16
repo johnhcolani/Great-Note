@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 
+import '../../../app_background/app_background.dart';
 import '../../../folders/presentation/bloc/folder_bloc.dart';
 import '../../../folders/presentation/bloc/folder_event.dart';
 import '../../../../core/widgets/custom_floating_action_button.dart';
@@ -14,7 +15,7 @@ class NotePage extends StatefulWidget {
   final int folderId;
   final String folderName;
 
-  NotePage({required this.folderId, required this.folderName});
+  const NotePage({super.key, required this.folderId, required this.folderName});
 
   @override
   State<NotePage> createState() => _NotePageState();
@@ -31,84 +32,88 @@ class _NotePageState extends State<NotePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Dispatch LoadNotes event when the page is opened
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     context.read<NoteBloc>().add(LoadNotes(folderId: widget.folderId));
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: GlossyAppBar(
         backgroundColor: Colors.transparent,
-        title: '$_folderName',
+        title: _folderName,
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
               _showEditFolderDialog(context);
             },
           ),
         ], elevation: 0,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/pure_background.png'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          const AppBackground(),
+          Container(
+            color: isDarkMode ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.1),
           ),
-        ),
-        child: BlocBuilder<NoteBloc, NoteState>(
-          builder: (context, state) {
-            if (state is NoteLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is NotesLoaded) {
-              return ListView.builder(
-                itemCount: state.notes.length,
-                itemBuilder: (context, index) {
-                  final note = state.notes[index];
-                  String plainText = '';
+            BlocBuilder<NoteBloc, NoteState>(
+              builder: (context, state) {
+                if (state is NoteLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is NotesLoaded) {
+                  return ListView.builder(
+                    itemCount: state.notes.length,
+                    itemBuilder: (context, index) {
+                      final note = state.notes[index];
+                      String plainText = '';
 
-                  try {
-                    // Try to parse the description as JSON
-                    final List<dynamic> content = jsonDecode(note['description']) as List<dynamic>;
-                    final quill.Document doc = quill.Document.fromJson(content);
-                    plainText = doc.toPlainText().trim(); // Convert Delta to plain text
-                  } catch (e) {
-                    // Handle error if description is not valid JSON
-                    plainText = note['description'];
-                  }
+                      try {
+                        // Try to parse the description as JSON
+                        final List<dynamic> content = jsonDecode(note['description']) as List<dynamic>;
+                        final quill.Document doc = quill.Document.fromJson(content);
+                        plainText = doc.toPlainText().trim(); // Convert Delta to plain text
+                      } catch (e) {
+                        // Handle error if description is not valid JSON
+                        plainText = note['description'];
+                      }
 
-                  return Card(
-                    child: ListTile(
-                      title: Text(note['title']),
-                      // subtitle: Text(plainText),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          _showDeleteConfirmationDialog(context, note['id']);
-                        },
-                      ),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => NoteEditPage(
-                              folderId: widget.folderId,
-                              noteId: note['id'],
-                              initialTitle: note['title'],
-                              initialDescription: note['description'],
-                            ),
+                      return Card(
+                        color: Colors.black.withOpacity(0.6),
+                        elevation: 10,
+                        child: ListTile(
+                          title: Text(note['title'],style: const TextStyle(color: Colors.white),),
+                           subtitle: Text(plainText,style: const TextStyle(color: Colors.white),),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete,color: Colors.white,),
+                            onPressed: () {
+                              _showDeleteConfirmationDialog(context, note['id']);
+                            },
                           ),
-                        );
-                      },
-                    ),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => NoteEditPage(
+                                  folderId: widget.folderId,
+                                  noteId: note['id'],
+                                  initialTitle: note['title'],
+                                  initialDescription: note['description'],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   );
-                },
-              );
-            } else if (state is NoteError) {
-              return Center(child: Text(state.message));
-            } else {
-              return Center(child: Text('No notes found'));
-            }
-          },
-        ),
+                } else if (state is NoteError) {
+                  return Center(child: Text(state.message));
+                } else {
+                  return const Center(child: Text('No notes found'));
+                }
+              },
+            ),
+
+        ],
       ),
       floatingActionButton: GlossyRectangularButton(
         onPressed: () {
@@ -122,28 +127,28 @@ class _NotePageState extends State<NotePage> {
 
   // Method to show a dialog for editing the folder name
   void _showEditFolderDialog(BuildContext context) {
-    final _folderNameController = TextEditingController(text: _folderName);
+    final folderNameController = TextEditingController(text: _folderName);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Edit Folder Name'),
+          title: const Text('Edit Folder Name'),
           content: TextFormField(
-            controller: _folderNameController,
-            decoration: InputDecoration(labelText: 'Folder Name'),
+            controller: folderNameController,
+            decoration: const InputDecoration(labelText: 'Folder Name'),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Save'),
+              child: const Text('Save'),
               onPressed: () {
-                final newFolderName = _folderNameController.text.trim();
+                final newFolderName = folderNameController.text.trim();
                 if (newFolderName.isNotEmpty) {
                   // Update the folder name in the Bloc
                   context.read<FolderBloc>().add(UpdateFolderName(
@@ -169,17 +174,17 @@ class _NotePageState extends State<NotePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Delete Note'),
-          content: Text('Are you sure you want to delete this note?'),
+          title: const Text('Delete Note'),
+          content: const Text('Are you sure you want to delete this note?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: const Text('Delete'),
               onPressed: () {
                 context.read<NoteBloc>().add(DeleteNote(
                   noteId: noteId,
@@ -196,39 +201,39 @@ class _NotePageState extends State<NotePage> {
 
   // Show dialog to add a new note
   void _showAddNoteDialog(BuildContext context) {
-    final _titleController = TextEditingController();
-    final _descriptionController = TextEditingController();
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Add Note'),
+          title: const Text('Add Note'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
               ),
               TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
               ),
             ],
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Add'),
+              child: const Text('Add'),
               onPressed: () {
-                final title = _titleController.text.trim();
-                final description = _descriptionController.text.trim();
+                final title = titleController.text.trim();
+                final description = descriptionController.text.trim();
                 if (title.isNotEmpty && description.isNotEmpty) {
                   context.read<NoteBloc>().add(
                     AddNote(

@@ -1,4 +1,8 @@
 part of 'background_bloc.dart';
 
-@immutable
-sealed class BackgroundEvent {}
+
+abstract class BackgroundEvent {}
+
+class LoadBackgroundEvent extends BackgroundEvent {}
+
+class ChangeBackgroundEvent extends BackgroundEvent {}

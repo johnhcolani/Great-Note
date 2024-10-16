@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:greate_note_app/features/folders/data/datasources/folder_local_datasource.dart';
-import 'package:meta/meta.dart';
 
 import 'folder_event.dart';
 
@@ -19,7 +18,7 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
         final folders = await localDataSource.getFolders();
         emit(FolderLoaded(folders));
       } catch (e) {
-        emit(FolderError('Failed to load folders'));
+        emit(const FolderError('Failed to load folders'));
       }
     });
 
@@ -33,7 +32,7 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
         // After adding a folder, reload the folders
         add(LoadFolders());  // Trigger a reload of the folders
       } catch (e) {
-        emit(FolderError('Failed to add folder'));
+        emit(const FolderError('Failed to add folder'));
       }
     });
 
@@ -44,7 +43,7 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
         // After deleting, reload the folders
         add(LoadFolders());
       } catch (e) {
-        emit(FolderError('Failed to delete folder'));
+        emit(const FolderError('Failed to delete folder'));
       }
     });
     on<UpdateFolderName>((event, emit) async {

@@ -1,43 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:greate_note_app/core/theme/theme_bloc.dart';
-import 'package:greate_note_app/splash_feature/presentation/screens/bloc/splash_bloc.dart';
-import 'package:greate_note_app/splash_feature/presentation/screens/splash_screen.dart';
+import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
+import 'package:greate_note_app/features/app_background/data/data_source/background_local_data_source.dart';
+import 'package:greate_note_app/features/splash_feature/presentation/screens/bloc/splash_bloc.dart';
+import 'package:greate_note_app/features/splash_feature/presentation/screens/splash_screen.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'core/database/app_database.dart';
 import 'features/folders/presentation/bloc/folder_bloc.dart';
 import 'features/folders/presentation/bloc/folder_event.dart';
-import 'features/folders/presentation/screens/folder_page.dart';
 import 'features/notes/data/data_sources/note_local_datasource.dart';
 import 'features/notes/presentation/bloc/note_bloc.dart';
 import 'features/folders/data/datasources/folder_local_datasource.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the database
-  final Database db = await AppDatabase().database;
+  try {
+    // Initialize the database
+    final Database db = await AppDatabase().database;
 
-  // Create the data sources
-  final FolderLocalDataSource folderLocalDataSource = FolderLocalDataSource(db);
-  final NoteLocalDataSource noteLocalDataSource = NoteLocalDataSource(db);
+    // Create the data sources
+    final FolderLocalDataSource folderLocalDataSource = FolderLocalDataSource(
+        db);
+    final NoteLocalDataSource noteLocalDataSource = NoteLocalDataSource(db);
+    final backgroundLocalDataSource = BackgroundLocalDataSource();
 
-  runApp(MyApp(
-    folderLocalDataSource: folderLocalDataSource,
-    noteLocalDataSource: noteLocalDataSource,
-  ));
+    await backgroundLocalDataSource
+        .init(); // Ensure the database is initialized
+
+    runApp(BlocProvider(
+      create: (context) => BackgroundBloc(backgroundLocalDataSource),
+      child: MyApp(
+        folderLocalDataSource: folderLocalDataSource,
+        noteLocalDataSource: noteLocalDataSource,
+        backgroundLocalDataSource: backgroundLocalDataSource,
+      ),
+    ));
+  } catch (e) {
+    print("Error initializing app: $e");
+  }
 }
 
 class MyApp extends StatelessWidget {
   final FolderLocalDataSource folderLocalDataSource;
   final NoteLocalDataSource noteLocalDataSource;
+  final BackgroundLocalDataSource backgroundLocalDataSource;
 
   MyApp({
     super.key,
     required this.folderLocalDataSource,
     required this.noteLocalDataSource,
+    required this.backgroundLocalDataSource,
   });
 
   @override
@@ -57,6 +72,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => NoteBloc(noteLocalDataSource),
+        ),
+        BlocProvider(
+          create: (context) => BackgroundBloc(backgroundLocalDataSource),
         ),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
@@ -79,14 +97,12 @@ class MyApp extends StatelessWidget {
       primarySwatch: Colors.blue,
       scaffoldBackgroundColor: Colors.white,
       textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.black),
-          bodyLarge: TextStyle(color: Colors.black)
+        bodyMedium: TextStyle(color: Colors.black),
+        bodyLarge: TextStyle(color: Colors.black),
       ),
       appBarTheme: const AppBarTheme(
-          color: Colors.blue,
-          iconTheme: IconThemeData(color: Colors.white)
-      )
-  );
+          color: Colors.blue, iconTheme: IconThemeData(color: Colors.white)));
+
   final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primarySwatch: Colors.blueGrey,

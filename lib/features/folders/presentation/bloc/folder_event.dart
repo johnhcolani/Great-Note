@@ -35,5 +35,5 @@ class UpdateFolderName extends FolderEvent {
   final int folderId;
   final String newName;
 
-  UpdateFolderName({required this.folderId, required this.newName});
+  const UpdateFolderName({required this.folderId, required this.newName});
 }
