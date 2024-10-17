@@ -50,6 +50,7 @@ dependencies:
   flutter_quill: ^10.8.2
   flutter_quill_extensions: ^10.8.2
   hydrated_bloc: ^9.1.5
+  google_mobile_ads: ^5.2.0
 
 dev_dependencies:
   flutter_test:
