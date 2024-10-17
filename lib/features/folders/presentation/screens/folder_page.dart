@@ -22,7 +22,7 @@ class FolderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenwidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
@@ -30,7 +30,7 @@ class FolderPage extends StatelessWidget {
       appBar: GlossyAppBar(
         title:
           'Folder Page',
-
+//'Folder Page $screenWidth',
 
         actions: [
           BlocBuilder<ThemeBloc, ThemeState>(
@@ -70,7 +70,7 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
             ),
             BlocBuilder<FolderBloc, FolderState>(
               builder: (context, state) {
-                print('Screen width is : $screenwidth');
+                print('Screen width is : $screenWidth');
                 if (state is FolderLoading) {
                   return const Center(
                       child: SizedBox(
@@ -83,8 +83,8 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: GridView.builder(
-                      gridDelegate:  const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                      gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount:getCrossAxisCount(screenWidth),
                           mainAxisSpacing: 16,
                           crossAxisSpacing: 16),
                       itemCount: state.folders.length,
@@ -166,12 +166,14 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  folder['name'],
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    folder['name'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -244,6 +246,17 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
         ],
       ),
     );
+  }
+  int getCrossAxisCount(double screenWidth) {
+    if (screenWidth >= 1200) {
+      return 4; // For very large screens (e.g., large tablets or desktop)
+    } else if (screenWidth >= 700) {
+      return 3; // For tablets and larger phones in landscape
+    } else if (screenWidth >= 300) {
+      return 2; // For regular phones in portrait or smaller tablets
+    } else {
+      return 1; // For small devices
+    }
   }
 
   // Method to confirm and delete the folder if empty
@@ -336,30 +349,69 @@ void _showAddFolderDialog(BuildContext context) {
                 ),
                 const SizedBox(height: 20),
                 const Text('Select Color:'),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _colorOption(Colors.red, selectedColor, () {
-                      setState(() {
-                        selectedColor = Colors.red;
-                      });
-                    }),
-                    _colorOption(Colors.green, selectedColor, () {
-                      setState(() {
-                        selectedColor = Colors.green;
-                      });
-                    }),
-                    _colorOption(Colors.blue, selectedColor, () {
-                      setState(() {
-                        selectedColor = Colors.blue;
-                      });
-                    }),
-                    _colorOption(Colors.yellow, selectedColor, () {
-                      setState(() {
-                        selectedColor = Colors.yellow;
-                      });
-                    }),
-                  ],
+                // Scrollable color options
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _colorOption(Colors.red, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.red;
+                        });
+                      }),
+                      _colorOption(Colors.green, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.green;
+                        });
+                      }),
+                      _colorOption(Colors.blue, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.blue;
+                        });
+                      }),
+                      _colorOption(Colors.yellow, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.yellow;
+                        });
+                      }),
+                      _colorOption(Colors.purple, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.purple;
+                        });
+                      }),
+                      _colorOption(Colors.orange, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.orange;
+                        });
+                      }),
+                      _colorOption(Colors.pink, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.pink;
+                        });
+                      }),
+                      _colorOption(Colors.teal, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.teal;
+                        });
+                      }),
+                      _colorOption(Colors.brown, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.brown;
+                        });
+                      }),
+                      _colorOption(Colors.cyan, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.cyan;
+                        });
+                      }),
+                      _colorOption(Colors.indigo, selectedColor, () {
+                        setState(() {
+                          selectedColor = Colors.indigo;
+                        });
+                      }),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -377,12 +429,12 @@ void _showAddFolderDialog(BuildContext context) {
                   if (folderName.isNotEmpty) {
                     // Store the color as an integer value
                     context.read<FolderBloc>().add(
-                          AddFolder(
-                            name: folderName,
-                            color: selectedColor.value
-                                .toString(), // Store color as int value string
-                          ),
-                        );
+                      AddFolder(
+                        name: folderName,
+                        color: selectedColor.value
+                            .toString(), // Store color as int value string
+                      ),
+                    );
                     Navigator.of(context)
                         .pop(); // Close dialog after adding folder
                   }
@@ -395,6 +447,7 @@ void _showAddFolderDialog(BuildContext context) {
     },
   );
 }
+
 
 // Widget to display color options
 Widget _colorOption(Color color, Color selectedColor, VoidCallback onTap) {
