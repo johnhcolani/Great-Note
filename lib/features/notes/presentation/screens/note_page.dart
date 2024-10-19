@@ -81,14 +81,27 @@ class _NotePageState extends State<NotePage> {
                         color: Colors.black.withOpacity(0.6),
                         elevation: 10,
                         child: ListTile(
-                          title: Text(note['title'],style: const TextStyle(color: Colors.white),),
-                           subtitle: Text(plainText,style: const TextStyle(color: Colors.white),),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete,color: Colors.white,),
-                            onPressed: () {
-                              _showDeleteConfirmationDialog(context, note['id']);
-                            },
+                          title: Column(
+                            children: [
+                              Container(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(child: Text(note['title'],style: const TextStyle(color: Colors.white),)),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,color: Colors.white,),
+                                      onPressed: () {
+                                        _showDeleteConfirmationDialog(context, note['id']);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            Divider(),
+                            ],
                           ),
+                           subtitle: Text(plainText,style: const TextStyle(color: Colors.white),),
+
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -216,10 +229,10 @@ class _NotePageState extends State<NotePage> {
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
               ),
-              TextFormField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-              ),
+              // TextFormField(
+              //   controller: descriptionController,
+              //   decoration: const InputDecoration(labelText: 'Description'),
+              // ),
             ],
           ),
           actions: <Widget>[
@@ -234,7 +247,9 @@ class _NotePageState extends State<NotePage> {
               onPressed: () {
                 final title = titleController.text.trim();
                 final description = descriptionController.text.trim();
-                if (title.isNotEmpty && description.isNotEmpty) {
+                if (title.isNotEmpty
+                   // && description.isNotEmpty
+                ) {
                   context.read<NoteBloc>().add(
                     AddNote(
                       folderId: widget.folderId,
