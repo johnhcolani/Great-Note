@@ -367,58 +367,68 @@ void _showAddFolderDialog(BuildContext context) {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _colorOption(Colors.red, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.red;
                         });
                       }),
+                      const SizedBox(width: 6,),
                       _colorOption(Colors.green, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.green;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.blue, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.blue;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.yellow, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.yellow;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.purple, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.purple;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.orange, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.orange;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.pink, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.pink;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.teal, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.teal;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.brown, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.brown;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.cyan, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.cyan;
                         });
                       }),
+                        const SizedBox(width: 6,),
                       _colorOption(Colors.indigo, selectedColor, () {
                         setState(() {
                           selectedColor = Colors.indigo;
