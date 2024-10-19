@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -12,14 +13,48 @@ import '../../../notes/presentation/screens/note_page.dart';
 import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
-class FolderPage extends StatelessWidget {
+class FolderPage extends StatefulWidget {
 
   final NoteLocalDataSource
       noteLocalDataSource; // Pass the data source to check notes
   const FolderPage({super.key, required this.noteLocalDataSource});
 
+  @override
+  State<FolderPage> createState() => _FolderPageState();
+}
 
-
+class _FolderPageState extends State<FolderPage> {
+  bool _isVisible = false;
+  Timer? _timer;
+  @override
+  void initState() {
+    _startVisibilityToggle();
+    super.initState();
+  }
+void _toggleVisibility() {
+  Future.delayed(const Duration(seconds: 30), () {
+    setState(() {
+      _isVisible = true;
+    });
+    Future.delayed(const Duration(seconds: 30), () {
+      setState(() {
+        _isVisible = false;
+      });
+    });
+  });
+}
+void  _startVisibilityToggle(){
+    _timer = Timer.periodic(Duration(seconds: 30), (Timer timer){
+      setState(() {
+        _isVisible = !_isVisible;
+      });
+    });
+}
+@override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -142,14 +177,38 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
 
         ],
       ),
-      floatingActionButton: GlossyRectangularButton(
-        onPressed: () {
-          _showAddFolderDialog(context);
-        },
-        icon: Icons.add,
+      floatingActionButton: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Visibility(
+              visible:_isVisible,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: Container(
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.yellow.withOpacity(0.5),
+                  borderRadius: BorderRadius.only(topRight: Radius.circular(24))
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: GlossyRectangularButton(
+              onPressed: () {
+                _showAddFolderDialog(context);
+              },
+              icon: Icons.add,
+            ),
+          ),
+        ],
       ),
     );
   }
+
 
   Stack buildCard(Map<String, dynamic> folder, BuildContext context) {
     return Stack(
@@ -208,7 +267,7 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: FutureBuilder<List<Map<String, dynamic>>>(
-                              future: noteLocalDataSource.getNotesForFolder(folder['id']),
+                              future: widget.noteLocalDataSource.getNotesForFolder(folder['id']),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState == ConnectionState.waiting) {
                                   return const Align(
@@ -261,6 +320,7 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
       ],
     );
   }
+
   int getCrossAxisCount(double screenWidth) {
     if (screenWidth >= 1200) {
       return 4; // For very large screens (e.g., large tablets or desktop)
@@ -277,7 +337,7 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
   Future<void> _confirmAndDeleteFolder(
       BuildContext context, int folderId, String folderName) async {
     // First check if the folder contains any notes
-    final hasNotes = await noteLocalDataSource.hasNotesInFolder(folderId);
+    final hasNotes = await widget.noteLocalDataSource.hasNotesInFolder(folderId);
 
     if (hasNotes) {
       // If the folder contains notes, show a message and prevent deletion
