@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greate_note_app/core/theme/theme_bloc.dart';
 import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
 import 'package:greate_note_app/features/app_background/data/data_source/background_local_data_source.dart';
@@ -16,6 +17,8 @@ import 'features/folders/data/datasources/folder_local_datasource.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
+
 
   try {
     // Initialize the database

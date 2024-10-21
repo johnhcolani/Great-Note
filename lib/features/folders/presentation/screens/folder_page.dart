@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greate_note_app/core/theme/theme_bloc.dart';
 import 'package:greate_note_app/core/widgets/custom_floating_action_button.dart';
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
@@ -14,7 +16,6 @@ import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
 class FolderPage extends StatefulWidget {
-
   final NoteLocalDataSource
       noteLocalDataSource; // Pass the data source to check notes
   const FolderPage({super.key, required this.noteLocalDataSource});
@@ -26,45 +27,75 @@ class FolderPage extends StatefulWidget {
 class _FolderPageState extends State<FolderPage> {
   bool _isVisible = false;
   Timer? _timer;
+  BannerAd? _bannerAd;
+  bool _isAdLoaded = false;
+  final String adUnitId = Platform.isAndroid
+      ? 'ca-app-pub-7380986533735423~4223005052' // Test ad unit for Android
+      : 'ca-app-pub-7380986533735423~8952587554'; // Test ad unit for iOS
+
   @override
   void initState() {
     _startVisibilityToggle();
+    _loadBannerAd();
     super.initState();
   }
-void _toggleVisibility() {
-  Future.delayed(const Duration(seconds: 30), () {
-    setState(() {
-      _isVisible = true;
-    });
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: adUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          debugPrint('Failed to load ad: $error');
+        },
+      ),
+    )..load();
+  }
+
+  void _toggleVisibility() {
     Future.delayed(const Duration(seconds: 30), () {
       setState(() {
-        _isVisible = false;
+        _isVisible = true;
+      });
+      Future.delayed(const Duration(seconds: 30), () {
+        setState(() {
+          _isVisible = false;
+        });
       });
     });
-  });
-}
-void  _startVisibilityToggle(){
-    _timer = Timer.periodic(Duration(seconds: 30), (Timer timer){
+  }
+
+  void _startVisibilityToggle() {
+    _timer = Timer.periodic(Duration(seconds: 30), (Timer timer) {
       setState(() {
         _isVisible = !_isVisible;
       });
     });
-}
-@override
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
+    _bannerAd?.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: GlossyAppBar(
-        title:
-          'Folder Page',
+        title: 'Folder Page',
 //'Folder Page $screenWidth',
 
         actions: [
@@ -74,8 +105,8 @@ void  _startVisibilityToggle(){
               return IconButton(
                 icon: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
-                  transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-
+                  transitionBuilder: (child, animation) =>
+                      ScaleTransition(scale: animation, child: child),
                   child: Icon(
                     state.themeMode == ThemeMode.dark
                         ? Icons.nights_stay_outlined // Moon icon for dark mode
@@ -90,9 +121,11 @@ void  _startVisibilityToggle(){
               );
             },
           ),
-          IconButton(onPressed: (){
-context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
-          }, icon: const Icon(Icons.image))
+          IconButton(
+              onPressed: () {
+                context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
+              },
+              icon: const Icon(Icons.image))
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
@@ -100,81 +133,83 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
       body: Stack(
         children: [
           const AppBackground(),
-            Container(
-              color: isDarkMode ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.1),
-            ),
-            BlocBuilder<FolderBloc, FolderState>(
-              builder: (context, state) {
-                print('Screen width is : $screenWidth');
-                if (state is FolderLoading) {
-                  return const Center(
-                      child: SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          )));
-                } else if (state is FolderLoaded) {
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: GridView.builder(
-                      gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount:getCrossAxisCount(screenWidth),
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16),
-                      itemCount: state.folders.length,
-                      itemBuilder: (context, index) {
-                        final folder = state.folders[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => NotePage(
-                                    folderId: folder['id'],
-                                    folderName: folder['name']),
-                              ),
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              // BackdropFilter to apply the blur effect
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                    16), // Same border radius as the container
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: 15.0, sigmaY: 15.0), // Blurry effect
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.white, width: 2),
-                                        color: Colors.white.withOpacity(
-                                            0.2), // Semi-transparent color overlay
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
+          Container(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.5)
+                : Colors.white.withOpacity(0.1),
+          ),
+          BlocBuilder<FolderBloc, FolderState>(
+            builder: (context, state) {
+              print('Screen width is : $screenWidth');
+              if (state is FolderLoading) {
+                return const Center(
+                    child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        )));
+              } else if (state is FolderLoaded) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: getCrossAxisCount(screenWidth),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16),
+                    itemCount: state.folders.length,
+                    itemBuilder: (context, index) {
+                      final folder = state.folders[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => NotePage(
+                                  folderId: folder['id'],
+                                  folderName: folder['name']),
+                            ),
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            // BackdropFilter to apply the blur effect
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  16), // Same border radius as the container
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                    sigmaX: 15.0,
+                                    sigmaY: 15.0), // Blurry effect
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                      color: Colors.white.withOpacity(
+                                          0.2), // Semi-transparent color overlay
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
                                 ),
                               ),
-                              // The actual folder card content
+                            ),
+                            // The actual folder card content
 
-                              buildCard(folder, context),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                } else if (state is FolderError) {
-                  return Center(child: Text(state.message));
-                } else {
-                  return const Center(child: Text('No folders found'));
-                }
-              },
-            ),
-
+                            buildCard(folder, context),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                );
+              } else if (state is FolderError) {
+                return Center(child: Text(state.message));
+              } else {
+                return const Center(child: Text('No folders found'));
+              }
+            },
+          ),
         ],
       ),
       floatingActionButton: Row(
@@ -182,15 +217,24 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
           Expanded(
             flex: 3,
             child: Visibility(
-              visible:_isVisible,
+              visible: _isVisible && _isAdLoaded,
               maintainSize: true,
               maintainAnimation: true,
               maintainState: true,
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.yellow.withOpacity(0.5),
-                  borderRadius: BorderRadius.only(topRight: Radius.circular(24))
+                    color: Colors.yellow.withOpacity(0.5),
+                    borderRadius:
+                        BorderRadius.only(topRight: Radius.circular(24))),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SizedBox(
+                    height: 60,
+                    child: _bannerAd != null
+                        ? AdWidget(ad: _bannerAd!)
+                        : const SizedBox(),
+                  ),
                 ),
               ),
             ),
@@ -208,7 +252,6 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
       ),
     );
   }
-
 
   Stack buildCard(Map<String, dynamic> folder, BuildContext context) {
     return Stack(
@@ -240,7 +283,6 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                         ),
                       ),
                     ),
-
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.white),
                       onPressed: () async {
@@ -267,9 +309,11 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: FutureBuilder<List<Map<String, dynamic>>>(
-                              future: widget.noteLocalDataSource.getNotesForFolder(folder['id']),
+                              future: widget.noteLocalDataSource
+                                  .getNotesForFolder(folder['id']),
                               builder: (context, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
                                   return const Align(
                                     alignment: Alignment.center,
                                     child: SizedBox(
@@ -283,7 +327,8 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                                   );
                                 } else if (snapshot.hasError) {
                                   return const Text('Error loading notes');
-                                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                } else if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
                                   return const Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text(
@@ -294,13 +339,28 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                                 } else {
                                   final notes = snapshot.data!;
                                   return ListView.builder(
-                                    shrinkWrap: true, // Prevents infinite height error
+                                    shrinkWrap:
+                                        true, // Prevents infinite height error
                                     itemCount: notes.length,
                                     itemBuilder: (context, index) {
                                       final note = notes[index];
-                                      return Text(
-                                        note['title'],
-                                        style: const TextStyle(color: Colors.white),
+                                      return Padding(
+                                        padding: const EdgeInsets.all(2.0),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color:
+                                                  Colors.white.withOpacity(0.7),
+                                              borderRadius:
+                                                  BorderRadius.circular(4.0)),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(4.0),
+                                            child: Text(
+                                              note['title'],
+                                              style: const TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          ),
+                                        ),
                                       );
                                     },
                                   );
@@ -337,7 +397,8 @@ context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
   Future<void> _confirmAndDeleteFolder(
       BuildContext context, int folderId, String folderName) async {
     // First check if the folder contains any notes
-    final hasNotes = await widget.noteLocalDataSource.hasNotesInFolder(folderId);
+    final hasNotes =
+        await widget.noteLocalDataSource.hasNotesInFolder(folderId);
 
     if (hasNotes) {
       // If the folder contains notes, show a message and prevent deletion
@@ -411,90 +472,129 @@ void _showAddFolderDialog(BuildContext context) {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
+            backgroundColor: Colors.white30.withOpacity(0.8),
             title: const Text('Add Folder'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   controller: folderNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Folder Name',
-                  ),
+                  maxLines: 1,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        borderSide: const BorderSide(
+                          color: Colors.blue, // Border color when not focused
+                          width: 2.0,
+                        ),
+                      ),
+                      labelText: 'Folder Name',
+                      labelStyle: const TextStyle(color: Colors.grey)),
                 ),
                 const SizedBox(height: 20),
                 const Text('Select Color:'),
                 // Scrollable color options
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _colorOption(Colors.red, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.red;
-                        });
-                      }),
-                      const SizedBox(width: 6,),
-                      _colorOption(Colors.green, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.green;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.blue, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.blue;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.yellow, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.yellow;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.purple, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.purple;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.orange, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.orange;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.pink, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.pink;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.teal, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.teal;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.brown, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.brown;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.cyan, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.cyan;
-                        });
-                      }),
-                        const SizedBox(width: 6,),
-                      _colorOption(Colors.indigo, selectedColor, () {
-                        setState(() {
-                          selectedColor = Colors.indigo;
-                        });
-                      }),
-                    ],
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(width: 2, color: Colors.grey),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 4.0, horizontal: 4.0),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _colorOption(Colors.red, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.red;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.green, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.green;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.blue, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.blue;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.yellow, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.yellow;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.purple, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.purple;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.orange, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.orange;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.pink, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.pink;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.teal, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.teal;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.brown, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.brown;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.cyan, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.cyan;
+                            });
+                          }),
+                          const SizedBox(
+                            width: 6,
+                          ),
+                          _colorOption(Colors.indigo, selectedColor, () {
+                            setState(() {
+                              selectedColor = Colors.indigo;
+                            });
+                          }),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -513,12 +613,12 @@ void _showAddFolderDialog(BuildContext context) {
                   if (folderName.isNotEmpty) {
                     // Store the color as an integer value
                     context.read<FolderBloc>().add(
-                      AddFolder(
-                        name: folderName,
-                        color: selectedColor.value
-                            .toString(), // Store color as int value string
-                      ),
-                    );
+                          AddFolder(
+                            name: folderName,
+                            color: selectedColor.value
+                                .toString(), // Store color as int value string
+                          ),
+                        );
                     Navigator.of(context)
                         .pop(); // Close dialog after adding folder
                   }
@@ -531,7 +631,6 @@ void _showAddFolderDialog(BuildContext context) {
     },
   );
 }
-
 
 // Widget to display color options
 Widget _colorOption(Color color, Color selectedColor, VoidCallback onTap) {

@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-7380986533735423~8952587554</string>
 	<key>CFBundleDisplayName</key>
 	<string>Greate Note App</string>
 	<key>CFBundleExecutable</key>
