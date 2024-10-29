@@ -65,16 +65,16 @@ class _NotePageState extends State<NotePage> {
                     itemCount: state.notes.length,
                     itemBuilder: (context, index) {
                       final note = state.notes[index];
-                      String plainText = '';
-
+                      String formattedText = '';
+                      quill.Document? document;
                       try {
                         // Try to parse the description as JSON
                         final List<dynamic> content = jsonDecode(note['description']) as List<dynamic>;
                         final quill.Document doc = quill.Document.fromJson(content);
-                        plainText = doc.toPlainText().trim(); // Convert Delta to plain text
+                        document = quill.Document.fromJson(content); // Convert Delta to plain text
                       } catch (e) {
                         // Handle error if description is not valid JSON
-                        plainText = note['description'];
+                        formattedText = note['description'];
                       }
 
                       return Card(
@@ -87,12 +87,22 @@ class _NotePageState extends State<NotePage> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Expanded(child: Text(note['title'],style: const TextStyle(color: Colors.white),)),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,color: Colors.white,),
-                                      onPressed: () {
-                                        _showDeleteConfirmationDialog(context, note['id']);
-                                      },
+                                    Expanded(child: Row(
+                                      children: [
+                                        Text(note['title'],style: const TextStyle(color: Colors.white),),
+                                        SizedBox(width: 20,),
+                                        Icon(Icons.edit,color: Colors.white,),
+                                      ],
+                                    )),
+
+                                    //SizedBox(width: 50,),
+                                    Expanded(
+                                      child: IconButton(
+                                        icon: const Icon(Icons.delete,color: Colors.white,),
+                                        onPressed: () {
+                                          _showDeleteConfirmationDialog(context, note['id']);
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -100,7 +110,15 @@ class _NotePageState extends State<NotePage> {
                             Divider(),
                             ],
                           ),
-                           subtitle: Text(plainText,style: const TextStyle(color: Colors.white),),
+                           subtitle: document !=null
+                          ? DefaultTextStyle(style: TextStyle(color: Colors.white),
+                             child:  quill.QuillEditor(
+                               controller: quill.QuillController(document: document, selection: TextSelection.collapsed(offset: 0)),
+
+                               focusNode: FocusNode(), scrollController: ScrollController())):
+
+
+                           Text(formattedText,style: const TextStyle(color: Colors.white),),
 
                           onTap: () {
                             Navigator.of(context).push(
