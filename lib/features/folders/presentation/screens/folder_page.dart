@@ -468,6 +468,7 @@ void _showAddFolderDialog(BuildContext context) {
 
   showDialog(
     context: context,
+    barrierDismissible: false,
     builder: (BuildContext context) {
       return StatefulBuilder(
         builder: (context, setState) {
