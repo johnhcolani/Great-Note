@@ -90,8 +90,8 @@ class _NotePageState extends State<NotePage> {
                                     Expanded(child: Row(
                                       children: [
                                         Text(note['title'],style: const TextStyle(color: Colors.white),),
-                                        SizedBox(width: 20,),
-                                        Icon(Icons.edit,color: Colors.white,),
+                                        const SizedBox(width: 20,),
+                                        const Icon(Icons.edit,color: Colors.white,),
                                       ],
                                     )),
 
@@ -107,13 +107,13 @@ class _NotePageState extends State<NotePage> {
                                   ],
                                 ),
                               ),
-                            Divider(),
+                            const Divider(),
                             ],
                           ),
                            subtitle: document !=null
-                          ? DefaultTextStyle(style: TextStyle(color: Colors.white),
+                          ? DefaultTextStyle(style: const TextStyle(color: Colors.white),
                              child:  quill.QuillEditor(
-                               controller: quill.QuillController(document: document, selection: TextSelection.collapsed(offset: 0)),
+                               controller: quill.QuillController(document: document, selection: const TextSelection.collapsed(offset: 0)),
 
                                focusNode: FocusNode(), scrollController: ScrollController())):
 

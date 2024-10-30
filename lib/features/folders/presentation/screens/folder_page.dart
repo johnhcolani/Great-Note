@@ -73,7 +73,7 @@ class _FolderPageState extends State<FolderPage> {
   }
 
   void _startVisibilityToggle() {
-    _timer = Timer.periodic(Duration(seconds: 30), (Timer timer) {
+    _timer = Timer.periodic(const Duration(seconds: 30), (Timer timer) {
       setState(() {
         _isVisible = !_isVisible;
       });
@@ -226,7 +226,7 @@ class _FolderPageState extends State<FolderPage> {
                 decoration: BoxDecoration(
                     color: Colors.yellow.withOpacity(0.5),
                     borderRadius:
-                        BorderRadius.only(topRight: Radius.circular(24))),
+                        const BorderRadius.only(topRight: Radius.circular(24))),
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
