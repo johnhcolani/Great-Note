@@ -1,7 +1,13 @@
+import 'dart:convert';
+
 import 'package:greate_note_app/features/folders/domain/entity/folder.dart';
 
 class FolderModel extends Folder {
-  FolderModel({required super.id, required super.name, required super.color})
+  FolderModel({
+    required super.id,
+    required super.name,
+    required super.createdAt,
+    required super.color})
       : super();
 // Converts a FolderModel into a Map for storing in SQLite
   Map<String, dynamic> toMap() {
@@ -9,6 +15,7 @@ class FolderModel extends Folder {
       'id': id,
       'name': name,
       'color': color,
+      'createdAt':createdAt.toIso8601String(),
     };
   }
 
@@ -16,7 +23,7 @@ class FolderModel extends Folder {
     return FolderModel(
         id: map['id'],
         name: map['name'],
-        color: map['color']
-    );
+        createdAt:DateTime.parse(map['createdAt']),
+        color: map['color']);
   }
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -9,9 +8,11 @@ import 'package:greate_note_app/core/theme/theme_bloc.dart';
 import 'package:greate_note_app/core/widgets/custom_floating_action_button.dart';
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../app_background/app_background.dart';
 import '../../../notes/data/data_sources/note_local_datasource.dart';
 import '../../../notes/presentation/screens/note_page.dart';
+import '../../domain/entity/folder.dart';
 import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
@@ -25,6 +26,7 @@ class FolderPage extends StatefulWidget {
 }
 
 class _FolderPageState extends State<FolderPage> {
+
   bool _isVisible = false;
   Timer? _timer;
   BannerAd? _bannerAd;
@@ -254,6 +256,9 @@ class _FolderPageState extends State<FolderPage> {
   }
 
   Stack buildCard(Map<String, dynamic> folder, BuildContext context) {
+    final createdAt = folder['createdAt'] as DateTime; // Extract timestamp
+    final formattedDate = DateFormat.yMMMd().add_jm().format(createdAt);
+
     return Stack(
       children: [
         Card(
@@ -265,30 +270,39 @@ class _FolderPageState extends State<FolderPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Title and delete button
+              // Title, date, and delete button
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        folder['name'],
-                        maxLines: 1, // Ensures the title is on one line
-
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            folder['name'],
+                            maxLines: 1, // Ensures the title is on one line
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                          onPressed: () async {
+                            await _confirmAndDeleteFolder(
+                                context, folder['id'], folder['name']);
+                          },
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.white),
-                      onPressed: () async {
-                        await _confirmAndDeleteFolder(
-                            context, folder['id'], folder['name']);
-                      },
+                   // const SizedBox(height: 4),
+                    Text(
+                      formattedDate, // Display formatted timestamp
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -339,8 +353,7 @@ class _FolderPageState extends State<FolderPage> {
                                 } else {
                                   final notes = snapshot.data!;
                                   return ListView.builder(
-                                    shrinkWrap:
-                                        true, // Prevents infinite height error
+                                    shrinkWrap: true,
                                     itemCount: notes.length,
                                     itemBuilder: (context, index) {
                                       final note = notes[index];
@@ -349,9 +362,9 @@ class _FolderPageState extends State<FolderPage> {
                                         child: Container(
                                           decoration: BoxDecoration(
                                               color:
-                                                  Colors.white.withOpacity(0.7),
+                                              Colors.white.withOpacity(0.7),
                                               borderRadius:
-                                                  BorderRadius.circular(4.0)),
+                                              BorderRadius.circular(4.0)),
                                           child: Padding(
                                             padding: const EdgeInsets.all(4.0),
                                             child: Text(
@@ -380,6 +393,7 @@ class _FolderPageState extends State<FolderPage> {
       ],
     );
   }
+
 
   int getCrossAxisCount(double screenWidth) {
     if (screenWidth >= 1200) {

@@ -22,7 +22,7 @@ class AppDatabase {
       join(await getDatabasesPath(), 'app_database.db'),
       onCreate: (db, version) async {
         await db.execute(
-          'CREATE TABLE folders(id INTEGER PRIMARY KEY, name TEXT, color TEXT)',
+          'CREATE TABLE folders(id INTEGER PRIMARY KEY, name TEXT, color TEXT,createdAt TEXT)',
         );
         await db.execute(
           'CREATE TABLE notes(id INTEGER PRIMARY KEY, folder_id INTEGER, title TEXT, description TEXT)',

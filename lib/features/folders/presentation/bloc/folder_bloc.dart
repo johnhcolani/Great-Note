@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:greate_note_app/features/folders/data/datasources/folder_local_datasource.dart';
 
 import 'folder_event.dart';
@@ -13,11 +14,13 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
   FolderBloc(this.localDataSource) : super(FolderLoading()) {
     // Event to load folders
     on<LoadFolders>((event, emit) async {
+
       emit(FolderLoading());
       try {
         final folders = await localDataSource.getFolders();
         emit(FolderLoaded(folders));
       } catch (e) {
+        debugPrint('Error in FolderBloc loading folders: $e');
         emit(const FolderError('Failed to load folders'));
       }
     });
@@ -28,14 +31,13 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
         await localDataSource.insertFolder({
           'name': event.name,
           'color': event.color,
+          'createdAt': event.createdAt.toIso8601String(), // Format timestamp as string
         });
-        // After adding a folder, reload the folders
         add(LoadFolders());  // Trigger a reload of the folders
       } catch (e) {
         emit(const FolderError('Failed to add folder'));
       }
     });
-
     // Event to delete a folder
     on<DeleteFolder>((event, emit) async {
       try {

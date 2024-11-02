@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 
 
@@ -7,10 +8,27 @@ class FolderLocalDataSource {
   FolderLocalDataSource(this.db);
 
   Future<List<Map<String, dynamic>>> getFolders() async {
-    return await db.query('folders');
+    try {
+      final folders = await db.query('folders');
+      return folders.map((folder) {
+        return {
+          ...folder,
+          'createdAt': folder['createdAt'] != null
+              ? DateTime.parse(folder['createdAt'] as String)
+              : DateTime.now(), // Fallback to current time if null
+        };
+      }).toList();
+    } catch (e) {
+      debugPrint('Error loading folders: $e');
+      throw Exception('Failed to load folders');
+    }
   }
 
   Future<int> insertFolder(Map<String, dynamic> folder) async {
+    // Ensure 'createdAt' is included in the folder data if not provided
+    if (!folder.containsKey('createdAt')) {
+      folder['createdAt'] = DateTime.now().toIso8601String();
+    }
     return await db.insert('folders', folder);
   }
 
