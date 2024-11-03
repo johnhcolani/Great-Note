@@ -20,6 +20,7 @@ class AppDatabase {
   Future<Database> _initDatabase() async {
     return openDatabase(
       join(await getDatabasesPath(), 'app_database.db'),
+      version: 2,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE folders(id INTEGER PRIMARY KEY, name TEXT, color TEXT,createdAt TEXT)',
@@ -28,7 +29,12 @@ class AppDatabase {
           'CREATE TABLE notes(id INTEGER PRIMARY KEY, folder_id INTEGER, title TEXT, description TEXT)',
         );
       },
-      version: 1,
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < newVersion) {
+            // Example migration: add new column or modify schema
+            await db.execute('ALTER TABLE folders ADD COLUMN createdAt TEXT');
+          }
+        },
     );
   }
   void _createDatabase(Database db, int version) async {

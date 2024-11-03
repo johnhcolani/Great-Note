@@ -25,11 +25,21 @@ class FolderLocalDataSource {
   }
 
   Future<int> insertFolder(Map<String, dynamic> folder) async {
-    // Ensure 'createdAt' is included in the folder data if not provided
-    if (!folder.containsKey('createdAt')) {
-      folder['createdAt'] = DateTime.now().toIso8601String();
+    try {
+      // Print the folder data being inserted
+      debugPrint('Inserting folder with data: $folder');
+
+      // Ensure 'createdAt' is included if not provided
+      if (!folder.containsKey('createdAt')) {
+        folder['createdAt'] = DateTime.now().toIso8601String();
+      }
+
+      // Insert into database and return the result
+      return await db.insert('folders', folder);
+    } catch (e) {
+      debugPrint('Error in insertFolder: $e');
+      throw Exception('Failed to insert folder');
     }
-    return await db.insert('folders', folder);
   }
 
   Future<int> deleteFolder(int id) async {

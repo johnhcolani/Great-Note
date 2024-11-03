@@ -34,7 +34,9 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
           'createdAt': event.createdAt.toIso8601String(), // Format timestamp as string
         });
         add(LoadFolders());  // Trigger a reload of the folders
-      } catch (e) {
+      } catch (e,stacktrace) {
+        debugPrint('Error adding folder: $e');
+        debugPrint('Stacktrace: $stacktrace');
         emit(const FolderError('Failed to add folder'));
       }
     });

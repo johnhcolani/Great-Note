@@ -6,6 +6,7 @@ import '../../../notes/data/data_sources/note_local_datasource.dart';
 import 'bloc/splash_bloc.dart';
 
 class SplashScreen extends StatefulWidget {
+
   final NoteLocalDataSource noteLocalDataSource;
   const SplashScreen({super.key, required this.noteLocalDataSource});
 

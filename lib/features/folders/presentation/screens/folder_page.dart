@@ -17,6 +17,7 @@ import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
 class FolderPage extends StatefulWidget {
+
   final NoteLocalDataSource
       noteLocalDataSource; // Pass the data source to check notes
   const FolderPage({super.key, required this.noteLocalDataSource});
