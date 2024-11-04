@@ -10,7 +10,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     on<SplashEvent>((event, emit) async {
      if (event is StartSplash){
        // delay
-       await Future.delayed(const Duration(seconds: 3));
+       await Future.delayed(const Duration(seconds: 4));
        emit( SplashCompleted());
      }
     });

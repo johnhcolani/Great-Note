@@ -78,47 +78,45 @@ class _NotePageState extends State<NotePage> {
                       }
 
                       return Card(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Color(0xECF3F0EE),
                         elevation: 10,
                         child: ListTile(
                           title: Column(
                             children: [
-                              Container(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(child: Row(
-                                      children: [
-                                        Text(note['title'],style: const TextStyle(color: Colors.white),),
-                                        const SizedBox(width: 20,),
-                                        const Icon(Icons.edit,color: Colors.white,),
-                                      ],
-                                    )),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                      child: Row(
 
-                                    //SizedBox(width: 50,),
-                                    Expanded(
-                                      child: IconButton(
-                                        icon: const Icon(Icons.delete,color: Colors.white,),
-                                        onPressed: () {
-                                          _showDeleteConfirmationDialog(context, note['id']);
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                        children: [
+                                      Text(note['title'],style: const TextStyle(color: Colors.blueGrey),),
+                                      const SizedBox(width: 20,),
+                                      const Icon(Icons.edit,color: Colors.blueGrey,),
+                                    ],
+                                  )),
+
+
+                                  IconButton(
+                                    icon: const Icon(Icons.delete,color: Colors.blueGrey,),
+                                    onPressed: () {
+                                      _showDeleteConfirmationDialog(context, note['id']);
+                                    },
+                                  ),
+                                ],
                               ),
                             const Divider(),
                             ],
                           ),
                            subtitle: document !=null
-                          ? DefaultTextStyle(style: const TextStyle(color: Colors.white),
+                          ? DefaultTextStyle(style: const TextStyle(color: Colors.blueGrey),
                              child:  quill.QuillEditor(
                                controller: quill.QuillController(document: document, selection: const TextSelection.collapsed(offset: 0)),
 
                                focusNode: FocusNode(), scrollController: ScrollController())):
 
 
-                           Text(formattedText,style: const TextStyle(color: Colors.white),),
+                           Text(formattedText,style: const TextStyle(color: Colors.blueGrey),),
 
                           onTap: () {
                             Navigator.of(context).push(
@@ -161,13 +159,16 @@ class _NotePageState extends State<NotePage> {
     final folderNameController = TextEditingController(text: _folderName);
 
     showDialog(
+
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+backgroundColor: const Color(0xFDEFEEEA),
           title: const Text('Edit Folder Name'),
           content: TextFormField(
             controller: folderNameController,
             decoration: const InputDecoration(labelText: 'Folder Name'),
+
           ),
           actions: <Widget>[
             TextButton(
@@ -179,8 +180,10 @@ class _NotePageState extends State<NotePage> {
             ElevatedButton(
               child: const Text('Save'),
               onPressed: () {
-                final newFolderName = folderNameController.text.trim();
+                String newFolderName = folderNameController.text.trim();
                 if (newFolderName.isNotEmpty) {
+                  // Capitalize the first letter of the folder name
+                  newFolderName = newFolderName[0].toUpperCase() + newFolderName.substring(1);
                   // Update the folder name in the Bloc
                   context.read<FolderBloc>().add(UpdateFolderName(
                     folderId: widget.folderId,
@@ -239,13 +242,25 @@ class _NotePageState extends State<NotePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add Note'),
+          backgroundColor: const Color(0xFDEFEEEA),
+
+          title: const Text('Add Note',style: TextStyle(color: Colors.blueGrey),),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration:  InputDecoration(
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 2.0),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.blueGrey, width: 2.0),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    labelText: 'Title',labelStyle: TextStyle(color: Colors.grey.shade500)),
+
               ),
               // TextFormField(
               //   controller: descriptionController,
@@ -263,7 +278,9 @@ class _NotePageState extends State<NotePage> {
             ElevatedButton(
               child: const Text('Add'),
               onPressed: () {
-                final title = titleController.text.trim();
+                String title = titleController.text.trim();
+                title = title[0].toUpperCase()+title.substring(1);
+
                 final description = descriptionController.text.trim();
                 if (title.isNotEmpty
                    // && description.isNotEmpty

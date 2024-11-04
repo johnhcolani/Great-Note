@@ -485,164 +485,169 @@ void _showAddFolderDialog(BuildContext context) {
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: Colors.white30.withOpacity(0.8),
-            title: const Text('Add Folder'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: folderNameController,
-                  maxLines: 1,
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue, // Border color when not focused
-                          width: 2.0,
+      return SingleChildScrollView(
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white30.withOpacity(0.8),
+              title: const Text('Add Folder'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: folderNameController,
+                    maxLines: 1,
+                    decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          borderSide: const BorderSide(
+                            color: Colors.blue, // Border color when not focused
+                            width: 2.0,
+                          ),
                         ),
-                      ),
-                      labelText: 'Folder Name',
-                      labelStyle: const TextStyle(color: Colors.grey)),
-                ),
-                const SizedBox(height: 20),
-                const Text('Select Color:'),
-                // Scrollable color options
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(width: 2, color: Colors.grey),
+                        labelText: 'Folder Name',
+                        labelStyle: const TextStyle(color: Colors.grey)),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 4.0, horizontal: 4.0),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _colorOption(Colors.red, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.red;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.green, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.green;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.blue, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.blue;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.yellow, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.yellow;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.purple, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.purple;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.orange, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.orange;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.pink, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.pink;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.teal, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.teal;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.brown, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.brown;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.cyan, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.cyan;
-                            });
-                          }),
-                          const SizedBox(
-                            width: 6,
-                          ),
-                          _colorOption(Colors.indigo, selectedColor, () {
-                            setState(() {
-                              selectedColor = Colors.indigo;
-                            });
-                          }),
-                        ],
+                  const SizedBox(height: 20),
+                  const Text('Select Color:'),
+                  // Scrollable color options
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(width: 2, color: Colors.grey),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4.0, horizontal: 4.0),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _colorOption(Colors.red, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.red;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.green, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.green;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.blue, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.blue;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.yellow, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.yellow;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.purple, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.purple;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.orange, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.orange;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.pink, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.pink;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.teal, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.teal;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.brown, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.brown;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.cyan, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.cyan;
+                              });
+                            }),
+                            const SizedBox(
+                              width: 6,
+                            ),
+                            _colorOption(Colors.indigo, selectedColor, () {
+                              setState(() {
+                                selectedColor = Colors.indigo;
+                              });
+                            }),
+                          ],
+                        ),
                       ),
                     ),
                   ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('Add'),
+                  onPressed: () {
+                    String folderName = folderNameController.text.trim();
+                    if (folderName.isNotEmpty) {
+                      // Capitalize the first letter of the folder name
+                      folderName = folderName[0].toUpperCase() + folderName.substring(1);
+        
+                      // Store the color as an integer value
+                      context.read<FolderBloc>().add(
+                            AddFolder(
+                              name: folderName,
+                              color: selectedColor.value
+                                  .toString(), // Store color as int value string
+                            ),
+                          );
+                      Navigator.of(context)
+                          .pop(); // Close dialog after adding folder
+                    }
+                  },
                 ),
               ],
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ElevatedButton(
-                child: const Text('Add'),
-                onPressed: () {
-                  final folderName = folderNameController.text.trim();
-                  if (folderName.isNotEmpty) {
-                    // Store the color as an integer value
-                    context.read<FolderBloc>().add(
-                          AddFolder(
-                            name: folderName,
-                            color: selectedColor.value
-                                .toString(), // Store color as int value string
-                          ),
-                        );
-                    Navigator.of(context)
-                        .pop(); // Close dialog after adding folder
-                  }
-                },
-              ),
-            ],
-          );
-        },
+            );
+          },
+        ),
       );
     },
   );

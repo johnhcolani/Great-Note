@@ -77,22 +77,26 @@ class _NoteEditPageState extends State<NoteEditPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
               ),
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: QuillEditor.basic(
-                controller: _quillController,
-configurations: const QuillEditorConfigurations(),
-                scrollController:
-                    ScrollController(), // Manages scrolling within the editor
-
-                focusNode: FocusNode(), // Focus on the editor
+              child: SingleChildScrollView(
+                child: QuillEditor.basic(
+                  controller: _quillController,
+                configurations: const QuillEditorConfigurations(),
+                  scrollController:
+                      ScrollController(), // Manages scrolling within the editor
+                
+                  focusNode: FocusNode(), // Focus on the editor
+                ),
               ),
             ),
             QuillToolbar.simple(
