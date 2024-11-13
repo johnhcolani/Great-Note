@@ -1,4 +1,4 @@
-package com.example.greate_note_app
+package com.johncolani.greate_note_app
 
 import io.flutter.embedding.android.FlutterActivity
 

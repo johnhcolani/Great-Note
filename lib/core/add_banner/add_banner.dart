@@ -18,7 +18,7 @@ class _BannerExampleState extends State<BannerExample> {
   // TODO: replace this test ad unit with your own ad unit.
   final adUnitId = Platform.isAndroid
       ? 'ca-app-pub-7380986533735423~4223005052'
-      : 'ca-app-pub-7380986533735423~8952587554';
+      : 'ca-app-pub-7380986533735423/8092603893';
 
   @override
   void initState() {

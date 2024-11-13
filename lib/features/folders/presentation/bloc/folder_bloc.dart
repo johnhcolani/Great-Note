@@ -10,6 +10,7 @@ part 'folder_state.dart';
 
 class FolderBloc extends Bloc<FolderEvent, FolderState> {
   final FolderLocalDataSource localDataSource;
+  List<Map<String, dynamic>> _allFolders = []; // Keep all folders for search
 
   FolderBloc(this.localDataSource) : super(FolderLoading()) {
     // Event to load folders
@@ -18,6 +19,7 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
       emit(FolderLoading());
       try {
         final folders = await localDataSource.getFolders();
+        _allFolders = folders; // Store all folders for search
         emit(FolderLoaded(folders));
       } catch (e) {
         debugPrint('Error in FolderBloc loading folders: $e');
@@ -57,6 +59,20 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
         add(LoadFolders());
       } catch (e) {
         emit(const FolderError('Failed to update folder name'));
+      }
+    });
+    // Event to search folders
+    on<SearchFolders>((event, emit) {
+      if (event.query.isEmpty) {
+        // Restore the original list if the search query is empty
+        emit(FolderLoaded(_allFolders));
+      } else {
+        // Filter the list based on the query
+        final filteredFolders = _allFolders.where((folder) {
+          final name = folder['name'].toLowerCase();
+          return name.contains(event.query.toLowerCase());
+        }).toList();
+        emit(FolderLoaded(filteredFolders));
       }
     });
   }

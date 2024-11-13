@@ -4,12 +4,15 @@ import 'package:equatable/equatable.dart';
 abstract class FolderEvent extends Equatable {
   const FolderEvent();
 
-  @override
-  List<Object> get props => [];
+
 }
 
 // Event to load all folders
-class LoadFolders extends FolderEvent {}
+class LoadFolders extends FolderEvent {
+  @override
+  // TODO: implement props
+  List<Object?> get props => throw UnimplementedError();
+}
 
 // Event to add a folder
 class AddFolder extends FolderEvent {
@@ -43,4 +46,16 @@ class UpdateFolderName extends FolderEvent {
   const UpdateFolderName({required this.folderId, required this.newName});
   @override
   List<Object> get props => [folderId,newName];
+}
+// New Event for Search
+class SearchFolders extends FolderEvent {
+  final String query;
+
+  const SearchFolders({required this.query});
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [query];
+
+
 }

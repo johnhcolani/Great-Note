@@ -27,7 +27,8 @@ class FolderPage extends StatefulWidget {
 }
 
 class _FolderPageState extends State<FolderPage> {
-
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isVisible = false;
   Timer? _timer;
   BannerAd? _bannerAd;
@@ -62,18 +63,6 @@ class _FolderPageState extends State<FolderPage> {
     )..load();
   }
 
-  void _toggleVisibility() {
-    Future.delayed(const Duration(seconds: 30), () {
-      setState(() {
-        _isVisible = true;
-      });
-      Future.delayed(const Duration(seconds: 30), () {
-        setState(() {
-          _isVisible = false;
-        });
-      });
-    });
-  }
 
   void _startVisibilityToggle() {
     _timer = Timer.periodic(const Duration(seconds: 30), (Timer timer) {
@@ -128,7 +117,8 @@ class _FolderPageState extends State<FolderPage> {
               onPressed: () {
                 context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
               },
-              icon: const Icon(Icons.image))
+              icon: const Icon(Icons.image)),
+
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
@@ -141,21 +131,19 @@ class _FolderPageState extends State<FolderPage> {
                 ? Colors.black.withOpacity(0.5)
                 : Colors.white.withOpacity(0.1),
           ),
-          BlocBuilder<FolderBloc, FolderState>(
-            builder: (context, state) {
-              print('Screen width is : $screenWidth');
-              if (state is FolderLoading) {
-                return const Center(
-                    child: SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                        )));
-              } else if (state is FolderLoaded) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: GridView.builder(
+
+          Padding(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.07),
+            child: BlocBuilder<FolderBloc, FolderState>(
+              builder: (context, state) {
+
+                if (state is FolderLoading) {
+                  return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ));
+                } else if (state is FolderLoaded) {
+                  return GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: getCrossAxisCount(screenWidth),
                         mainAxisSpacing: 16,
@@ -204,14 +192,47 @@ class _FolderPageState extends State<FolderPage> {
                         ),
                       );
                     },
+                  );
+                } else if (state is FolderError) {
+                  return Center(child: Text(state.message));
+                } else {
+                  return const Center(child: Text('No folders found'));
+                }
+              },
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.08),
+            child: Container(
+
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search folders...',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search,color: Colors.grey,),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                );
-              } else if (state is FolderError) {
-                return Center(child: Text(state.message));
-              } else {
-                return const Center(child: Text('No folders found'));
-              }
-            },
+                ),
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                  context
+                      .read<FolderBloc>()
+                      .add(SearchFolders(query: query));
+                },
+                onSubmitted: (query) {
+                  // Perform the search and then clear the text field
+                  context.read<FolderBloc>().add(SearchFolders(query: query));
+                  _searchController.clear();
+                  context.read<FolderBloc>().add(SearchFolders(query: '')); // Reload all folders
+// Clear the text field
+                },
+              ),
+            ),
           ),
         ],
       ),

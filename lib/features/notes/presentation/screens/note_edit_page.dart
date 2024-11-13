@@ -73,41 +73,49 @@ class _NoteEditPageState extends State<NoteEditPage> {
         backgroundColor: Colors.brown.withOpacity(0.3),
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+        
+            children: [
+              Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: 'Title'),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: SingleChildScrollView(
-                child: QuillEditor.basic(
-                  controller: _quillController,
-                configurations: const QuillEditorConfigurations(),
-                  scrollController:
-                      ScrollController(), // Manages scrolling within the editor
-                
-                  focusNode: FocusNode(), // Focus on the editor
+              const SizedBox(height: 10),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: QuillEditor.basic(
+                    controller: _quillController,
+                  configurations: const QuillEditorConfigurations(),
+                    scrollController:
+                        ScrollController(), // Manages scrolling within the editor
+
+                    focusNode: FocusNode(), // Focus on the editor
+                  ),
                 ),
               ),
-            ),
-            QuillToolbar.simple(
-              controller: _quillController,
-              configurations: const QuillSimpleToolbarConfigurations(
-                showCenterAlignment: true,
-                showJustifyAlignment: true,
-
-              ),),
-
-          ],
+              SizedBox(
+                height: 100,
+                child: SingleChildScrollView(
+                  child: QuillToolbar.simple(
+                    controller: _quillController,
+                    configurations: const QuillSimpleToolbarConfigurations(
+                      showCenterAlignment: true,
+                      showJustifyAlignment: true,
+                  
+                    ),),
+                ),
+              ),
+        
+            ],
+          ),
         ),
       ),
     );
