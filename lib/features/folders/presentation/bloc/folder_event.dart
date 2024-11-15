@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:greate_note_app/features/notes/presentation/bloc/note_bloc.dart';
 
 // Define base class for Folder events
 abstract class FolderEvent extends Equatable {
@@ -6,12 +7,10 @@ abstract class FolderEvent extends Equatable {
 
 
 }
-
-// Event to load all folders
 class LoadFolders extends FolderEvent {
   @override
   // TODO: implement props
-  List<Object?> get props => throw UnimplementedError();
+  List<Object?> get props => [];
 }
 
 // Event to add a folder
@@ -58,4 +57,12 @@ class SearchFolders extends FolderEvent {
   List<Object?> get props => [query];
 
 
+}
+class SearchNotes extends FolderEvent {
+  final String query;
+
+  const SearchNotes({required this.query});
+
+  @override
+  List<Object?> get props => [query];
 }
