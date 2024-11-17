@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -18,9 +19,8 @@ import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
 class FolderPage extends StatefulWidget {
-
   final NoteLocalDataSource
-      noteLocalDataSource; // Pass the data source to check notes
+  noteLocalDataSource; // Pass the data source to check notes
   const FolderPage({super.key, required this.noteLocalDataSource});
 
   @override
@@ -36,34 +36,33 @@ class _FolderPageState extends State<FolderPage> {
   bool _isAdLoaded = true;
   final String adUnitId = Platform.isAndroid
       ? 'ca-app-pub-3940256099942544/1033173712'
-      : 'ca-app-pub-3940256099942544/4411468910'; // Test ad unit for iOS
+      : 'ca-app-pub-7380986533735423/8092603893'; // Test ad unit for iOS
 
   @override
   void initState() {
     _startVisibilityToggle();
-    _loadBannerAd();
+    // _loadBannerAd();
     super.initState();
   }
 
-  void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: adUnitId,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          setState(() {
-            _isAdLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          debugPrint('Failed to load ad: $error');
-        },
-      ),
-    )..load();
-  }
-
+  // void _loadBannerAd() {
+  //   _bannerAd = BannerAd(
+  //     adUnitId: adUnitId,
+  //     size: AdSize.banner,
+  //     request: const AdRequest(),
+  //     listener: BannerAdListener(
+  //       onAdLoaded: (ad) {
+  //         setState(() {
+  //           _isAdLoaded = false;
+  //         });
+  //       },
+  //       onAdFailedToLoad: (ad, error) {
+  //         ad.dispose();
+  //         debugPrint('Failed to load ad: $error');
+  //       },
+  //     ),
+  //   )..load();
+  // }
 
   void _startVisibilityToggle() {
     _timer = Timer.periodic(const Duration(seconds: 30), (Timer timer) {
@@ -90,7 +89,6 @@ class _FolderPageState extends State<FolderPage> {
       extendBodyBehindAppBar: true,
       appBar: GlossyAppBar(
         title: 'Folder Page',
-
 
         actions: [
           BlocBuilder<ThemeBloc, ThemeState>(
@@ -120,7 +118,6 @@ class _FolderPageState extends State<FolderPage> {
                 context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
               },
               icon: const Icon(Icons.image)),
-
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
@@ -133,7 +130,6 @@ class _FolderPageState extends State<FolderPage> {
                 ? Colors.black.withOpacity(0.5)
                 : Colors.white.withOpacity(0.1),
           ),
-
           _buildFolderGrid(context, screenWidth),
           _buildSearchBar(context),
         ],
@@ -157,7 +153,7 @@ class _FolderPageState extends State<FolderPage> {
               decoration: BoxDecoration(
                   color: Colors.yellow.withOpacity(0.5),
                   borderRadius:
-                      const BorderRadius.only(topRight: Radius.circular(24))),
+                  const BorderRadius.only(topRight: Radius.circular(24))),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: SizedBox(
@@ -185,112 +181,157 @@ class _FolderPageState extends State<FolderPage> {
 
   Padding _buildSearchBar(BuildContext context) {
     return Padding(
-          padding: EdgeInsets.only(
-              top:Platform.isAndroid
-                  ? MediaQuery.of(context).size.height * 0.08
-                  : MediaQuery.of(context).size.height * 0.13),
-          child: Container(
+      padding: EdgeInsets.only(
+          top: Platform.isAndroid
+              ? MediaQuery.of(context).size.height * 0.08
+              : MediaQuery.of(context).size.height * 0.15),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: TextField(
+          style: const TextStyle(color: Colors.white),
+          cursorColor: Colors.grey.shade400,
+          controller: _searchController,
+          decoration: InputDecoration(
 
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search folders or notes...',
-                hintStyle: TextStyle(color: Colors.grey),
-                prefixIcon: const Icon(Icons.search,color: Colors.grey,),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              onChanged: (query) {
-                setState(() {
-                  _searchQuery = query;
-                });
-                context.read<FolderBloc>().add(SearchFolders(query: query));
-                context.read<NoteBloc>().add(SearchNotes(query: query));
-              },
-              onSubmitted: (query) {
-                // Perform the search and then clear the text field
-                context.read<FolderBloc>().add(LoadFolders());
+            labelText: 'Search folders ...',
+            labelStyle: TextStyle(color: Colors.grey.shade400),
+            prefixIcon:  Icon(
+              Icons.search,
+              color:Colors.grey.shade400,
+            ),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+              icon: Icon(Icons.clear, color: Colors.grey.shade400),
+              onPressed: () {
                 _searchController.clear();
-                context.read<NoteBloc>().add(LoadNotes(folderId: -1)); // Reload all folders
-// Clear the text field
+                setState(() {
+                  _searchQuery = '';
+                });
+                context.read<FolderBloc>().add(LoadFolders());
+                context.read<NoteBloc>().add(LoadNotes(folderId: -1)); // Reset notes
               },
+            )
+                : null, // Show the clear icon only when there's text
+            border: OutlineInputBorder(
+
+              borderRadius: BorderRadius.circular(8.0),
+              borderSide: const BorderSide(color: Colors.white, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              borderSide: const BorderSide(color: Colors.white, width: 1.5), // Enabled border
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              borderSide: const BorderSide(color: Colors.white, width: 2.0), // Focused border
             ),
           ),
-        );
+          onChanged: (query) {
+            setState(() {
+              _searchQuery = query;
+            });
+            if (query.isNotEmpty) {
+              context.read<FolderBloc>().add(SearchFolders(query: query));
+            } else {
+              context.read<FolderBloc>().add(LoadFolders());
+              context
+                  .read<NoteBloc>()
+                  .add(LoadNotes(folderId: -1)); // Reset notes
+            }
+          },
+          onSubmitted: (query) {
+            _searchController.clear();
+            setState(() {
+              _searchQuery = '';
+            });
+            // Perform the search and then clear the text field
+            context.read<FolderBloc>().add(LoadFolders());
+
+            context
+                .read<NoteBloc>()
+                .add(LoadNotes(folderId: -1)); // Reload all folders
+// Clear the text field
+          },
+        ),
+      ),
+    );
   }
 
   Padding _buildFolderGrid(BuildContext context, double screenWidth) {
     return Padding(
-          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.07),
-          child: BlocBuilder<FolderBloc, FolderState>(
-            builder: (context, state) {
-
-              if (state is FolderLoading) {
-                return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ));
-              } else if (state is FolderLoaded) {
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: getCrossAxisCount(screenWidth),
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16),
-                  itemCount: state.folders.length,
-                  itemBuilder: (context, index) {
-                    final folder = state.folders[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => NotePage(
-                                folderId: folder['id'],
-                                folderName: folder['name']),
-                          ),
-                        );
-                      },
-                      child: Stack(
-                        children: [
-                          // BackdropFilter to apply the blur effect
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                16), // Same border radius as the container
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(
-                                  sigmaX: 15.0,
-                                  sigmaY: 15.0), // Blurry effect
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.white, width: 2),
-                                    color: Colors.white.withOpacity(
-                                        0.2), // Semi-transparent color overlay
-                                    borderRadius: BorderRadius.circular(16),
+      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.09,left: 8.0,right: 8.0),
+      child: Column(
+        children: [
+          // Folders Section
+          Expanded(
+            flex: 1,
+            child: BlocBuilder<FolderBloc, FolderState>(
+              builder: (context, state) {
+                if (state is FolderLoading) {
+                  return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ));
+                } else if (state is FolderLoaded) {
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: getCrossAxisCount(screenWidth),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16),
+                    itemCount: state.folders.length,
+                    itemBuilder: (context, index) {
+                      final folder = state.folders[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => NotePage(
+                                  folderId: folder['id'], folderName: folder['name']),
+                            ),
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            // BackdropFilter to apply the blur effect
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  16), // Same border radius as the container
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                    sigmaX: 15.0, sigmaY: 15.0), // Blurry effect
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border:
+                                      Border.all(color: Colors.white, width: 2),
+                                      color: Colors.white.withOpacity(
+                                          0.2), // Semi-transparent color overlay
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          // The actual folder card content
+                            // The actual folder card content
 
-                          buildCard(folder, context),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              } else if (state is FolderError) {
-                return Center(child: Text(state.message));
-              } else {
-                return const Center(child: Text('No folders found'));
-              }
-            },
+                            buildCard(folder, context),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                } else if (state is FolderError) {
+                  return Center(child: Text(state.message));
+                } else {
+                  return const Center(child: Text('No folders found'));
+                }
+              },
+            ),
           ),
-        );
+        ],
+      ),
+    );
   }
 
   Stack buildCard(Map<String, dynamic> folder, BuildContext context) {
@@ -337,10 +378,11 @@ class _FolderPageState extends State<FolderPage> {
                         ),
                       ],
                     ),
-                   // const SizedBox(height: 4),
+                    // const SizedBox(height: 4),
                     Text(
                       formattedDate, // Display formatted timestamp
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style:
+                      const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -432,7 +474,6 @@ class _FolderPageState extends State<FolderPage> {
     );
   }
 
-
   int getCrossAxisCount(double screenWidth) {
     if (screenWidth >= 1200) {
       return 4; // For very large screens (e.g., large tablets or desktop)
@@ -450,7 +491,7 @@ class _FolderPageState extends State<FolderPage> {
       BuildContext context, int folderId, String folderName) async {
     // First check if the folder contains any notes
     final hasNotes =
-        await widget.noteLocalDataSource.hasNotesInFolder(folderId);
+    await widget.noteLocalDataSource.hasNotesInFolder(folderId);
 
     if (hasNotes) {
       // If the folder contains notes, show a message and prevent deletion
@@ -466,7 +507,7 @@ class _FolderPageState extends State<FolderPage> {
         return AlertDialog(
           title: const Text('Delete Folder'),
           content:
-              Text('Are you sure you want to delete the folder "$folderName"?'),
+          Text('Are you sure you want to delete the folder "$folderName"?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
@@ -666,16 +707,17 @@ void _showAddFolderDialog(BuildContext context) {
                     String folderName = folderNameController.text.trim();
                     if (folderName.isNotEmpty) {
                       // Capitalize the first letter of the folder name
-                      folderName = folderName[0].toUpperCase() + folderName.substring(1);
-        
+                      folderName =
+                          folderName[0].toUpperCase() + folderName.substring(1);
+
                       // Store the color as an integer value
                       context.read<FolderBloc>().add(
-                            AddFolder(
-                              name: folderName,
-                              color: selectedColor.value
-                                  .toString(), // Store color as int value string
-                            ),
-                          );
+                        AddFolder(
+                          name: folderName,
+                          color: selectedColor.value
+                              .toString(), // Store color as int value string
+                        ),
+                      );
                       Navigator.of(context)
                           .pop(); // Close dialog after adding folder
                     }
@@ -707,3 +749,4 @@ Widget _colorOption(Color color, Color selectedColor, VoidCallback onTap) {
     ),
   );
 }
+
