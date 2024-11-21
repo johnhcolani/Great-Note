@@ -98,7 +98,7 @@ class _NotePageState extends State<NotePage> {
                                 ),
                                 IconButton(
                                   icon: Icon(
-                                    isExpanded
+                                    _expandedNotes.contains(note['id'])
                                         ? Icons.keyboard_arrow_up
                                         : Icons.keyboard_arrow_down,
                                     color: theme.iconTheme.color,
@@ -133,6 +133,8 @@ class _NotePageState extends State<NotePage> {
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                   const SizedBox(height: 8),
+                                  if (note['description'] != null &&
+                                      note['description'].isNotEmpty)
                                   quill.QuillEditor(
                                     controller: quill.QuillController(
                                       document: quill.Document.fromJson(
@@ -142,6 +144,7 @@ class _NotePageState extends State<NotePage> {
                                     ),
                                     focusNode: FocusNode(),
                                     scrollController: ScrollController(),
+                    )else Text('No description available.',style: theme.textTheme.bodyMedium,
 
                                   ),
                                 ],
