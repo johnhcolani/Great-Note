@@ -93,44 +93,44 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
 
             // Second image sliding in from the left
-            Positioned(
-              top: screenHeight * 0.15, // 15% from the top
-              left: screenWidth * 0.53, // 5% from the left
-              child: SlideTransition(
-                position: _secondAnimation,
-                child: SizedBox(
-                  height: screenHeight * 0.3, // 30% of screen height
-                  child: Image.asset('assets/images/first.png'),
-                ),
-              ),
-            ),
+            // Positioned(
+            //   top: screenHeight * 0.15, // 15% from the top
+            //   left: screenWidth * 0.53, // 5% from the left
+            //   child: SlideTransition(
+            //     position: _secondAnimation,
+            //     child: SizedBox(
+            //       height: screenHeight * 0.3, // 30% of screen height
+            //       child: Image.asset('assets/images/first.png'),
+            //     ),
+            //   ),
+            // ),
 
 
             // Fourth image sliding in from the left
-            Positioned(
-              top: screenHeight * 0.32, // 40% from the top
-              right: screenWidth * 0.66, // 10% from the right
-              child: SlideTransition(
-                position: _forthAnimation,
-                child: SizedBox(
-                  height: screenHeight * 0.4, // 28% of screen height
-                  child: Image.asset('assets/images/third.png'),
-                ),
-              ),
-            ),
+            // Positioned(
+            //   top: screenHeight * 0.32, // 40% from the top
+            //   right: screenWidth * 0.66, // 10% from the right
+            //   child: SlideTransition(
+            //     position: _forthAnimation,
+            //     child: SizedBox(
+            //       height: screenHeight * 0.4, // 28% of screen height
+            //       child: Image.asset('assets/images/third.png'),
+            //     ),
+            //   ),
+            // ),
 
             // Third image sliding in from the right
-            Positioned(
-              top: screenHeight * 0.6, // 60% from the top
-              left: screenWidth * 0.49, // 20% from the left
-              child: SlideTransition(
-                position: _thirdAnimation,
-                child: SizedBox(
-                  height: screenHeight * 0.3, // 30% of screen height
-                  child: Image.asset('assets/images/second.png'),
-                ),
-              ),
-            ),
+            // Positioned(
+            //   top: screenHeight * 0.6, // 60% from the top
+            //   left: screenWidth * 0.49, // 20% from the left
+            //   child: SlideTransition(
+            //     position: _thirdAnimation,
+            //     child: SizedBox(
+            //       height: screenHeight * 0.3, // 30% of screen height
+            //       child: Image.asset('assets/images/second.png'),
+            //     ),
+            //   ),
+            // ),
 
 
             // First image (quill) sliding down to the center

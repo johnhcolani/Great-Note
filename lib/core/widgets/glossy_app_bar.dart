@@ -20,7 +20,7 @@ class GlossyAppBar extends StatelessWidget implements PreferredSizeWidget {
         // BackdropFilter to apply the blur effect
         ClipRRect(
           borderRadius: const BorderRadius.vertical(
-            bottom: Radius.circular(16), // Rounded bottom corners
+           // bottom: Radius.circular(16), // Rounded bottom corners
           ),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Blur effect
