@@ -135,7 +135,7 @@ class _FolderPageState extends State<FolderPage> {
         
             Padding(
               padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.07,
+                  top: MediaQuery.of(context).size.height * 0.08,
                   left: MediaQuery.of(context).size.width * 0.03,
                   right: MediaQuery.of(context).size.width * 0.03,),
               child: BlocBuilder<FolderBloc, FolderState>(
@@ -209,53 +209,66 @@ class _FolderPageState extends State<FolderPage> {
               padding: EdgeInsets.only(
                 top: MediaQuery.of(context).size.height * 0.01,
                 left: MediaQuery.of(context).size.width * 0.03,
-                right: MediaQuery.of(context).size.width * 0.03,),
-              child: Container(
-
-
-                decoration: BoxDecoration(
-                  color: Colors.white, // Set your desired background color
-                  borderRadius: BorderRadius.circular(10.0), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3), // Shadow color
-                      spreadRadius: 3,
-                      blurRadius: 5,
-                      offset: Offset(0, 3), // Shadow position
-                    ),
-                  ],
-                ),
-                child: TextField(
-
-                  controller: _searchController,
-                  decoration: InputDecoration(
-
-                    hintText: 'Search folders...',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.search,color: Colors.grey,),
-                    border: OutlineInputBorder(
-
-                      borderRadius: BorderRadius.circular(8.0),
+                right: MediaQuery.of(context).size.width * 0.03,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10.0), // Rounded corners for the effect
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.1) // Dark mode color
+                        : Colors.white.withOpacity(0.4), // Light mode color
+                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.7), // Subtle border
+                      width: 1.0,
                     ),
                   ),
-                  onChanged: (query) {
-                    setState(() {
-                      _searchQuery = query;
-                    });
-                    context
-                        .read<FolderBloc>()
-                        .add(SearchFolders(query: query));
-                  },
-                  onSubmitted: (query) {
-                    // Perform the search and then clear the text field
-                    context.read<FolderBloc>().add(SearchFolders(query: query));
-                    _searchController.clear();
-                    context.read<FolderBloc>().add(SearchFolders(query: '')); // Reload all folders
-                      // Clear the text field
-                  },
+                  child: TextField(
+                    controller: _searchController,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black, // Adjust text color for theme
+                    ),
+                    cursorColor: Colors.grey.shade400,
+                    decoration: InputDecoration(
+                      hintText: 'Search folders...',
+                      hintStyle: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade700, // Adjust hint color for theme
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade700, // Adjust icon color for theme
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide.none, // No visible border
+                      ),
+                    ),
+                    onChanged: (query) {
+                      setState(() {
+                        _searchQuery = query;
+                      });
+                      context.read<FolderBloc>().add(SearchFolders(query: query));
+                    },
+                    onSubmitted: (query) {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                      context.read<FolderBloc>().add(LoadFolders());
+                    },
+                  ),
                 ),
               ),
             ),
+
+
           ],
         ),
       ),

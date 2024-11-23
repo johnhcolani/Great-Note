@@ -99,6 +99,9 @@ class MyApp extends StatelessWidget {
       brightness: Brightness.light,
       primarySwatch: Colors.blue,
       scaffoldBackgroundColor: Colors.white,
+      iconTheme:  IconThemeData(
+        color: Colors.blueGrey.shade500
+      ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(color: Colors.black),
         bodyLarge: TextStyle(color: Colors.black),
@@ -110,6 +113,9 @@ class MyApp extends StatelessWidget {
     brightness: Brightness.dark,
     primarySwatch: Colors.blueGrey,
     scaffoldBackgroundColor: Colors.black,
+    iconTheme:  IconThemeData(
+        color: Colors.blueGrey.shade200
+    ),
     textTheme: const TextTheme(
       bodyMedium: TextStyle(color: Colors.white),
       bodyLarge: TextStyle(color: Colors.white),
