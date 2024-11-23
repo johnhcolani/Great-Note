@@ -41,13 +41,7 @@ class FolderLocalDataSource {
       throw Exception('Failed to insert folder');
     }
   }
-  Future<List<Map<String, dynamic>>> searchFolders(String query) async {
-    return await db.query(
-      'folders',
-      where: 'name LIKE ?',
-      whereArgs: ['%$query%'],
-    );
-  }
+
   Future<int> deleteFolder(int id) async {
     return await db.delete('folders', where: 'id = ?', whereArgs: [id]);
   }
