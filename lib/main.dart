@@ -15,50 +15,32 @@ import 'features/notes/data/data_sources/note_local_datasource.dart';
 import 'features/notes/presentation/bloc/note_bloc.dart';
 import 'features/folders/data/datasources/folder_local_datasource.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
 
+
   try {
     // Initialize the database
-    final Database database = await AppDatabase().getDatabase();
+    final Database db = await AppDatabase().database;
 
     // Create the data sources
-    final folderLocalDataSource = FolderLocalDataSource(database);
-    final noteLocalDataSource = NoteLocalDataSource(database);
+    final FolderLocalDataSource folderLocalDataSource = FolderLocalDataSource(
+        db);
+    final NoteLocalDataSource noteLocalDataSource = NoteLocalDataSource(db);
     final backgroundLocalDataSource = BackgroundLocalDataSource();
 
-    await backgroundLocalDataSource.init();
+    await backgroundLocalDataSource
+        .init(); // Ensure the database is initialized
 
-    runApp(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (context) => ThemeBloc(),
-          ),
-          BlocProvider(
-            create: (context) => SplashBloc(),
-          ),
-          BlocProvider(
-            create: (context) => FolderBloc(
-              folderDataSource: folderLocalDataSource,
-              noteDataSource: noteLocalDataSource,
-            )..add(LoadFolders()),
-          ),
-          BlocProvider(
-            create: (context) => NoteBloc(noteLocalDataSource),
-          ),
-          BlocProvider(
-            create: (context) => BackgroundBloc(backgroundLocalDataSource),
-          ),
-        ],
-        child: MyApp(
-          folderLocalDataSource: folderLocalDataSource,
-          noteLocalDataSource: noteLocalDataSource,
-          backgroundLocalDataSource: backgroundLocalDataSource,
-        ),
+    runApp(BlocProvider(
+      create: (context) => BackgroundBloc(backgroundLocalDataSource),
+      child: MyApp(
+        folderLocalDataSource: folderLocalDataSource,
+        noteLocalDataSource: noteLocalDataSource,
+        backgroundLocalDataSource: backgroundLocalDataSource,
       ),
-    );
+    ));
   } catch (e) {
     print("Error initializing app: $e");
   }
@@ -69,7 +51,7 @@ class MyApp extends StatelessWidget {
   final NoteLocalDataSource noteLocalDataSource;
   final BackgroundLocalDataSource backgroundLocalDataSource;
 
-   MyApp({
+  MyApp({
     super.key,
     required this.folderLocalDataSource,
     required this.noteLocalDataSource,
@@ -78,38 +60,62 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, state) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Folder and Notes App',
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: state.themeMode,
-          home: SplashScreen(noteLocalDataSource: noteLocalDataSource),
-        );
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ThemeBloc(),
+        ),
+        BlocProvider(
+          create: (context) => SplashBloc(),
+        ),
+        BlocProvider(
+          create: (context) =>
+          FolderBloc(folderLocalDataSource)
+            ..add(LoadFolders()),
+        ),
+        BlocProvider(
+          create: (context) => NoteBloc(noteLocalDataSource),
+        ),
+        BlocProvider(
+          create: (context) => BackgroundBloc(backgroundLocalDataSource),
+        ),
+      ],
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, state) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Folder and Notes App',
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            themeMode: state.themeMode,
+            home: SplashScreen(noteLocalDataSource: noteLocalDataSource),
+          );
+        },
+      ),
     );
   }
 
   final ThemeData lightTheme = ThemeData(
-    brightness: Brightness.light,
-    primarySwatch: Colors.blue,
-    scaffoldBackgroundColor: Colors.white,
-    textTheme: const TextTheme(
-      bodyMedium: TextStyle(color: Colors.black),
-      bodyLarge: TextStyle(color: Colors.black),
-    ),
-    appBarTheme: const AppBarTheme(
-      color: Colors.blue,
-      iconTheme: IconThemeData(color: Colors.white),
-    ),
-  );
+      brightness: Brightness.light,
+      primarySwatch: Colors.blue,
+      scaffoldBackgroundColor: Colors.white,
+      iconTheme:  IconThemeData(
+        color: Colors.blueGrey.shade500
+      ),
+      textTheme: const TextTheme(
+        bodyMedium: TextStyle(color: Colors.black),
+        bodyLarge: TextStyle(color: Colors.black),
+      ),
+      appBarTheme: const AppBarTheme(
+          color: Colors.blue, iconTheme: IconThemeData(color: Colors.white)));
 
   final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primarySwatch: Colors.blueGrey,
     scaffoldBackgroundColor: Colors.black,
+    iconTheme: const IconThemeData(
+        color: Colors.blueGrey
+    ),
     textTheme: const TextTheme(
       bodyMedium: TextStyle(color: Colors.white),
       bodyLarge: TextStyle(color: Colors.white),

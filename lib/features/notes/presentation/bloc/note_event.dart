@@ -5,7 +5,8 @@ part of 'note_bloc.dart';
 abstract class NoteEvent extends Equatable {
   const NoteEvent();
 
-
+  @override
+  List<Object> get props => [];
 }
 
 // Event to load notes for a specific folder
@@ -64,12 +65,4 @@ class DeleteNote extends NoteEvent {
 
   @override
   List<Object> get props => [noteId, folderId];
-}
-class SearchNotes extends NoteEvent {
-  final String query;
-
-  const SearchNotes({required this.query});
-
-  @override
-  List<Object?> get props => [query];
 }
