@@ -12,7 +12,6 @@ import 'package:intl/intl.dart';
 import '../../../app_background/app_background.dart';
 import '../../../notes/data/data_sources/note_local_datasource.dart';
 import '../../../notes/presentation/screens/note_page.dart';
-import '../../domain/entity/folder.dart';
 import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
@@ -29,17 +28,16 @@ class FolderPage extends StatefulWidget {
 class _FolderPageState extends State<FolderPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _isVisible = false;
-  Timer? _timer;
+
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
   final String adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-7380986533735423~4223005052' // Test ad unit for Android
-      : 'ca-app-pub-7380986533735423~8952587554'; // Test ad unit for iOS
+      ? 'ca-app-pub-7380986533735423/9390534815' // Test ad unit for Android
+      : 'ca-app-pub-7380986533735423/9390534815'; // Test ad unit for iOS
 
   @override
   void initState() {
-    _startVisibilityToggle();
+
     _loadBannerAd();
     super.initState();
   }
@@ -64,17 +62,11 @@ class _FolderPageState extends State<FolderPage> {
   }
 
 
-  void _startVisibilityToggle() {
-    _timer = Timer.periodic(const Duration(seconds: 30), (Timer timer) {
-      setState(() {
-        _isVisible = !_isVisible;
-      });
-    });
-  }
+
 
   @override
   void dispose() {
-    _timer?.cancel();
+
     _bannerAd?.dispose();
     super.dispose();
   }
@@ -277,16 +269,16 @@ class _FolderPageState extends State<FolderPage> {
           Expanded(
             flex: 3,
             child: Visibility(
-              visible: _isVisible && _isAdLoaded,
+              visible: _isAdLoaded,
               maintainSize: true,
               maintainAnimation: true,
               maintainState: true,
               child: Container(
                 height: 60,
-                decoration: BoxDecoration(
-                    color: Colors.yellow.withOpacity(0.5),
+                decoration: const BoxDecoration(
+                   // color: Colors.yellow.withOpacity(0.5),
                     borderRadius:
-                        const BorderRadius.only(topRight: Radius.circular(24))),
+                        BorderRadius.only(topRight: Radius.circular(24))),
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
