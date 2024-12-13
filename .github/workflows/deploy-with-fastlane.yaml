@@ -35,12 +35,16 @@ jobs:
           flutter-version-file: 'pubspec.yaml'
           channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
-
-      - uses: maierj/fastlane-action@v3.1.0
+      - name: Build and Submit iOS App
+        uses: maierj/fastlane-action@v3.1.0
         with:
           lane: 'release_app_store'
           subdirectory: ios
-          options: '{ "version_number": "${{ github.ref_name }}" }'
+          options: '{ 
+            "submit_for_review": true,
+            "automatic_release": true,
+            "version_number": "${{ github.ref_name }}" 
+          }'
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
