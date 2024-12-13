@@ -13,6 +13,7 @@ migrate_working_dir/
 # IntelliJ related
 *.iml
 *.ipr
+*.ipa
 *.iws
 .idea/
 
