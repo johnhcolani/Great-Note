@@ -17,9 +17,14 @@ default_platform(:ios)
 
 platform :ios do
   desc "Push a new release build to the App Store"
-  lane :release do
+  lane :release_app_store do
     increment_build_number(xcodeproj: "Runner.xcodeproj")
     build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
-    upload_to_app_store
+    upload_to_app_store(
+      skip_metadata: false, # Set to true if metadata is managed via App Store Connect
+      skip_screenshots: false, # Set to true if screenshots are not required
+      submit_for_review: true, # Automatically submit the build for review
+      automatic_release: true  # Automatically release the app after approval
+    )
   end
 end
