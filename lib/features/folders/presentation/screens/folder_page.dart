@@ -33,7 +33,7 @@ class _FolderPageState extends State<FolderPage> {
   bool _isAdLoaded = false;
   final String adUnitId = Platform.isAndroid
       ? 'ca-app-pub-7380986533735423/9390534815' // Test ad unit for Android
-      : 'ca-app-pub-7380986533735423/9390534815'; // Test ad unit for iOS
+      : 'ca-app-pub-7380986533735423/6731935085'; // Test ad unit for iOS
 
   @override
   void initState() {
@@ -115,89 +115,89 @@ class _FolderPageState extends State<FolderPage> {
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
       ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            const AppBackground(),
-            Container(
-              color: isDarkMode
-                  ? Colors.black.withOpacity(0.5)
-                  : Colors.white.withOpacity(0.1),
-            ),
-        
-            Padding(
-              padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.08,
-                  left: MediaQuery.of(context).size.width * 0.03,
-                  right: MediaQuery.of(context).size.width * 0.03,),
-              child: BlocBuilder<FolderBloc, FolderState>(
-                builder: (context, state) {
-        
-                  if (state is FolderLoading) {
-                    return const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                        ));
-                  } else if (state is FolderLoaded) {
-                    return GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: getCrossAxisCount(screenWidth),
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16),
-                      itemCount: state.folders.length,
-                      itemBuilder: (context, index) {
-                        final folder = state.folders[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => NotePage(
-                                    folderId: folder['id'],
-                                    folderName: folder['name']),
-                              ),
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              // BackdropFilter to apply the blur effect
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                    16), // Same border radius as the container
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: 15.0,
-                                      sigmaY: 15.0), // Blurry effect
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.white, width: 2),
-                                        color: Colors.white.withOpacity(
-                                            0.2), // Semi-transparent color overlay
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
+      body: Stack(
+        children: [
+          const AppBackground(),
+          Container(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.5)
+                : Colors.white.withOpacity(0.1),
+          ),
+
+          Padding(
+            padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.08,
+                left: MediaQuery.of(context).size.width * 0.03,
+                right: MediaQuery.of(context).size.width * 0.03,),
+            child: BlocBuilder<FolderBloc, FolderState>(
+              builder: (context, state) {
+
+                if (state is FolderLoading) {
+                  return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ));
+                } else if (state is FolderLoaded) {
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: getCrossAxisCount(screenWidth),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16),
+                    itemCount: state.folders.length,
+                    itemBuilder: (context, index) {
+                      final folder = state.folders[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => NotePage(
+                                  folderId: folder['id'],
+                                  folderName: folder['name']),
+                            ),
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            // BackdropFilter to apply the blur effect
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  16), // Same border radius as the container
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                    sigmaX: 15.0,
+                                    sigmaY: 15.0), // Blurry effect
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                      color: Colors.white.withOpacity(
+                                          0.2), // Semi-transparent color overlay
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
                                 ),
                               ),
-                              // The actual folder card content
-        
-                              buildCard(folder, context),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  } else if (state is FolderError) {
-                    return Center(child: Text(state.message));
-                  } else {
-                    return const Center(child: Text('No folders found'));
-                  }
-                },
-              ),
+                            ),
+                            // The actual folder card content
+
+                            buildCard(folder, context),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                } else if (state is FolderError) {
+                  return Center(child: Text(state.message));
+                } else {
+                  return const Center(child: Text('No folders found'));
+                }
+              },
             ),
-            Padding(
+          ),
+          SafeArea(
+            child: Padding(
               padding: EdgeInsets.only(
                 top: MediaQuery.of(context).size.height * 0.01,
                 left: MediaQuery.of(context).size.width * 0.03,
@@ -259,10 +259,10 @@ class _FolderPageState extends State<FolderPage> {
                 ),
               ),
             ),
+          ),
 
 
-          ],
-        ),
+        ],
       ),
       floatingActionButton: Row(
         children: [
