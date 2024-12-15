@@ -141,3 +141,4 @@ jobs:
           SLACK_TITLE: "${{ contains(needs.*.result, 'success') && 'Successfully released' || 'Error during release of' }} ${{ github.ref_name }} for Android to Play Store"
           SLACK_FOOTER: "DevOps"
           SLACK_MESSAGE: "${{ contains(needs.*.result, 'success') && 'Released:' || 'Release failed:' }} ${{github.event.head_commit.message}}"
+#  fastlane release_app_store
