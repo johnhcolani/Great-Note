@@ -14,7 +14,7 @@ class SearchBarDelegate extends SliverPersistentHeaderDelegate {
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search folders...',
-          prefixIcon: Icon(Icons.search),
+          prefixIcon: const Icon(Icons.search),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
           ),

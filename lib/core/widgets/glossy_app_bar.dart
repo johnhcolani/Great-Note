@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class GlossyAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -36,8 +35,8 @@ class GlossyAppBar extends StatelessWidget implements PreferredSizeWidget {
         // The actual AppBar content
         AppBar(
           backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? Color(0xff3a3932) // Dark mode background
-              :  Color(0xff989586), // Light mode background
+              ? const Color(0xff3a3932) // Dark mode background
+              :  const Color(0xff989586), // Light mode background
           elevation: 0, // No shadow
           title: Text(
             title,

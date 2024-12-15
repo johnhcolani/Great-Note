@@ -9,6 +9,7 @@ import 'package:greate_note_app/core/widgets/custom_floating_action_button.dart'
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/database/database_export_import.dart';
 import '../../../app_background/app_background.dart';
 import '../../../notes/data/data_sources/note_local_datasource.dart';
 import '../../../notes/presentation/screens/note_page.dart';
@@ -26,6 +27,8 @@ class FolderPage extends StatefulWidget {
 }
 
 class _FolderPageState extends State<FolderPage> {
+  bool isFilePickerActive = false;
+  final DatabaseExportImport _dbHandler = DatabaseExportImport();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -105,12 +108,36 @@ class _FolderPageState extends State<FolderPage> {
               );
             },
           ),
-          IconButton(
-              onPressed: () {
-                context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
-              },
-              icon: const Icon(Icons.image)),
+          Row(
+            children: [
+              IconButton(
+                  onPressed: () {
+                    context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
+                  },
+                  icon: const Icon(Icons.image)),
 
+            ],
+          ),
+
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'Export') {
+                await _dbHandler.exportDatabase();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Database exported successfully!')),
+                );
+              } else if (value == 'Import') {
+                await _dbHandler.importDatabase();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Database imported successfully!')),
+                );
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'Export', child: Text('Export Database')),
+              const PopupMenuItem(value: 'Import', child: Text('Import Database')),
+            ],
+          ),
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow

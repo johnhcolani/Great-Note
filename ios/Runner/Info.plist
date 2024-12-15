@@ -18,6 +18,10 @@
 	<string>greate_note_app</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
