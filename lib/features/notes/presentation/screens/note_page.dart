@@ -274,11 +274,11 @@ backgroundColor: const Color(0xFDEFEEEA),
                 controller: titleController,
                 decoration:  InputDecoration(
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey, width: 2.0),
+                      borderSide: const BorderSide(color: Colors.grey, width: 2.0),
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueGrey, width: 2.0),
+                      borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0),
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     labelText: 'Title',labelStyle: TextStyle(color: Colors.grey.shade500)),
