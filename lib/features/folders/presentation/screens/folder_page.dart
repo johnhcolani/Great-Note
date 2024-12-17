@@ -32,8 +32,8 @@ class _FolderPageState extends State<FolderPage> {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
   final String adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-7380986533735423/9390534815' // Test ad unit for Android
-      : 'ca-app-pub-7380986533735423/6731935085'; // Test ad unit for iOS
+      ? 'ca-app-pub-7380986533735423/5284390969' // Test ad unit for Android
+      : 'ca-app-pub-7380986533735423/6597472636'; // Test ad unit for iOS
 
   @override
   void initState() {

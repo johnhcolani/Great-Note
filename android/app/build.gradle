@@ -61,3 +61,7 @@ android {
 flutter {
     source = "../.."
 }
+// Add this dependencies block after the android {} block
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:22.2.0' // Add Google Mobile Ads SDK
+}
