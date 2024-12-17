@@ -13,7 +13,7 @@ PODS:
     - Flutter
     - Google-Mobile-Ads-SDK (~> 11.10.0)
     - webview_flutter_wkwebview
-  - GoogleUserMessagingPlatform (2.6.0)
+  - GoogleUserMessagingPlatform (2.7.0)
   - image_picker_ios (0.0.1):
     - Flutter
   - irondash_engine_context (0.0.1):
@@ -95,7 +95,7 @@ SPEC CHECKSUMS:
   gal: 61e868295d28fe67ffa297fae6dacebf56fd53e1
   Google-Mobile-Ads-SDK: 13e6e98edfd78ad8d8a791edb927658cc260a56f
   google_mobile_ads: 2a538d8e42b1813809782792e48f8cf4374c2180
-  GoogleUserMessagingPlatform: 0c3a08353e53ce8c2feab7addd0b652cde522450
+  GoogleUserMessagingPlatform: a8b56893477f67212fbc8411c139e61d463349f5
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   irondash_engine_context: 3458bf979b90d616ffb8ae03a150bafe2e860cc9
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46

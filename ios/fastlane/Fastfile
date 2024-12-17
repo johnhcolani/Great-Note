@@ -21,10 +21,11 @@ platform :ios do
     increment_build_number(xcodeproj: "Runner.xcodeproj")
     build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
     upload_to_app_store(
-      skip_metadata: false, # Set to true if metadata is managed via App Store Connect
-      skip_screenshots: false, # Set to true if screenshots are not required
-      submit_for_review: true, # Automatically submit the build for review
-      automatic_release: true  # Automatically release the app after approval
+      api_key: {
+          key_id: "88M9PZQQVA",
+          issuer_id: "19dde628-21bd-41bd-8fb9-4eda79f4018c",
+          key_file: "./fastlane/88M9PZQQVA.p8"
+        }
     )
   end
 end
