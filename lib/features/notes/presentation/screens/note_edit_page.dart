@@ -13,7 +13,7 @@ class NoteEditPage extends StatefulWidget {
   final String initialTitle;
   final String initialDescription; // This should be the Quill Delta JSON string
 
-  const NoteEditPage({super.key, 
+  const NoteEditPage({super.key,
     required this.folderId,
     required this.noteId,
     required this.initialTitle,
@@ -78,7 +78,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
-        
+
             children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -109,11 +109,11 @@ class _NoteEditPageState extends State<NoteEditPage> {
                     configurations: const QuillSimpleToolbarConfigurations(
                       showCenterAlignment: true,
                       showJustifyAlignment: true,
-                  
+
                     ),),
                 ),
               ),
-        
+
             ],
           ),
         ),
@@ -123,7 +123,10 @@ class _NoteEditPageState extends State<NoteEditPage> {
   Future<void> _onImagePickCallback() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      _quillController.document.insert(_quillController.selection.baseOffset,
+      final imagePath = pickedFile.path;
+    // Embed image in quill editor
+      _quillController.document.insert(
+          _quillController.selection.baseOffset,
           quill.BlockEmbed.image(pickedFile.path));
     }
   }
