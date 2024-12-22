@@ -4,6 +4,12 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>mailto</string>
+        <string>sms</string>
+    </array>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

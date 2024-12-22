@@ -102,7 +102,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 ),
               ),
               SizedBox(
-                height: 100,
+                height: 155,
                 child: SingleChildScrollView(
                   child: QuillToolbar.simple(
                     controller: _quillController,

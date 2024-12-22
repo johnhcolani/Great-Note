@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app_background/app_background.dart';
 import '../../../folders/presentation/bloc/folder_bloc.dart';
@@ -50,6 +53,7 @@ class _NotePageState extends State<NotePage> {
               _showEditFolderDialog(context);
             },
           ),
+
         ], elevation: 0,
       ),
       body: Stack(
@@ -98,9 +102,7 @@ class _NotePageState extends State<NotePage> {
                                 ),
                                 IconButton(
                                   icon: Icon(
-                                    _expandedNotes.contains(note['id'])
-                                        ? Icons.keyboard_arrow_up
-                                        : Icons.keyboard_arrow_down,
+                                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                                     color: theme.iconTheme.color,
                                   ),
                                   onPressed: () {
@@ -119,8 +121,93 @@ class _NotePageState extends State<NotePage> {
                                     _showDeleteConfirmationDialog(context, note['id']);
                                   },
                                 ),
+                                IconButton(
+                                  icon: Icon(
+                                    Theme.of(context).platform == TargetPlatform.iOS
+                                        ? CupertinoIcons.share
+                                        : Icons.share,
+                                    color: theme.iconTheme.color,
+                                  ),
+                                  onPressed: () async {
+                                    try {
+                                      // Debug the raw description
+                                      print("Note Description Raw: ${note['description']}");
+                                      print("Note Description Type: ${note['description'].runtimeType}");
+
+                                      // Check if description is JSON or a plain string
+                                      String contentToShare;
+                                      if (note['description'] != null && note['description'].isNotEmpty) {
+                                        if (note['description'].startsWith('{')) {
+                                          // Try to decode JSON
+                                          final decodedDescription = jsonDecode(note['description']);
+                                          if (decodedDescription is Map<String, dynamic> &&
+                                              decodedDescription['ops'] is List<dynamic>) {
+                                            contentToShare = (decodedDescription['ops'] as List<dynamic>)
+                                                .map((op) => op['insert']?.toString() ?? "")
+                                                .join();
+                                          } else {
+                                            // Fallback if 'ops' is missing or not a list
+                                            contentToShare = "No valid content available.";
+                                          }
+                                        } else {
+                                          // If it's plain text
+                                          contentToShare = note['description'];
+                                        }
+                                      } else {
+                                        // Default content if description is null or empty
+                                        contentToShare = "No description available.";
+                                      }
+
+                                      // Fallback for note title
+                                      final noteTitle = note['title'] ?? "Untitled Note";
+
+                                      // Debug content to share
+                                      print("Content to Share: $contentToShare");
+
+                                      // Share the content
+                                      await Share.share(contentToShare, subject: noteTitle);
+                                    } catch (e) {
+                                      // Log and handle errors gracefully
+                                      print("Error during sharing: $e");
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Unable to share the note. Please try again.")),
+                                      );
+                                    }
+                                  },
+                                ),
+
                               ],
                             ),
+                          ),
+                          if (isExpanded)
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Description:", style: theme.textTheme.bodyMedium),
+                                  const SizedBox(height: 8),
+                                  if (note['description'] != null && note['description'].isNotEmpty)
+                                    quill.QuillEditor(
+                                      controller: quill.QuillController(
+                                        document: quill.Document.fromJson(
+                                          jsonDecode(note['description']),
+                                        ),
+                                        selection: const TextSelection.collapsed(offset: 0),
+                                      ),
+                                      focusNode: FocusNode(),
+                                      scrollController: ScrollController(),
+                                    )
+                                  else
+                                    Text('No description available.', style: theme.textTheme.bodyMedium),
+
+
+
+
+
+                              ],
+                            ),
+
                           ),
                           if (isExpanded)
                             Padding(

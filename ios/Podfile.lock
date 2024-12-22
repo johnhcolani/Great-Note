@@ -23,6 +23,8 @@ PODS:
     - FlutterMacOS
   - quill_native_bridge_ios (0.0.1):
     - Flutter
+  - share_plus (0.0.1):
+    - Flutter
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
@@ -47,6 +49,7 @@ DEPENDENCIES:
   - irondash_engine_context (from `.symlinks/plugins/irondash_engine_context/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - quill_native_bridge_ios (from `.symlinks/plugins/quill_native_bridge_ios/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - super_native_extensions (from `.symlinks/plugins/super_native_extensions/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -77,6 +80,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   quill_native_bridge_ios:
     :path: ".symlinks/plugins/quill_native_bridge_ios/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
   sqflite_darwin:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
   super_native_extensions:
@@ -100,6 +105,7 @@ SPEC CHECKSUMS:
   irondash_engine_context: 3458bf979b90d616ffb8ae03a150bafe2e860cc9
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   quill_native_bridge_ios: 277bdf5bf0fa5d7a12999556b415a5c63dd76ec4
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   super_native_extensions: 4916b3c627a9c7fffdc48a23a9eca0b1ac228fa7
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
