@@ -130,44 +130,16 @@ class _NotePageState extends State<NotePage> {
                                   ),
                                   onPressed: () async {
                                     try {
-                                      // Debug the raw description
-                                      print("Note Description Raw: ${note['description']}");
-                                      print("Note Description Type: ${note['description'].runtimeType}");
-
-                                      // Check if description is JSON or a plain string
-                                      String contentToShare;
-                                      if (note['description'] != null && note['description'].isNotEmpty) {
-                                        if (note['description'].startsWith('{')) {
-                                          // Try to decode JSON
-                                          final decodedDescription = jsonDecode(note['description']);
-                                          if (decodedDescription is Map<String, dynamic> &&
-                                              decodedDescription['ops'] is List<dynamic>) {
-                                            contentToShare = (decodedDescription['ops'] as List<dynamic>)
-                                                .map((op) => op['insert']?.toString() ?? "")
-                                                .join();
-                                          } else {
-                                            // Fallback if 'ops' is missing or not a list
-                                            contentToShare = "No valid content available.";
-                                          }
-                                        } else {
-                                          // If it's plain text
-                                          contentToShare = note['description'];
-                                        }
-                                      } else {
-                                        // Default content if description is null or empty
-                                        contentToShare = "No description available.";
-                                      }
-
-                                      // Fallback for note title
+                                      // Parse the description safely
+                                      final contentToShare = parseDescription(note['description']);
                                       final noteTitle = note['title'] ?? "Untitled Note";
 
-                                      // Debug content to share
-                                      print("Content to Share: $contentToShare");
+                                      print("Content to share: $contentToShare");
+                                      print("Note title: $noteTitle");
 
-                                      // Share the content
+                                      // Share content
                                       await Share.share(contentToShare, subject: noteTitle);
                                     } catch (e) {
-                                      // Log and handle errors gracefully
                                       print("Error during sharing: $e");
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(content: Text("Unable to share the note. Please try again.")),
@@ -175,6 +147,7 @@ class _NotePageState extends State<NotePage> {
                                     }
                                   },
                                 ),
+
 
                               ],
                             ),
@@ -260,6 +233,34 @@ class _NotePageState extends State<NotePage> {
         icon: Icons.add,
       ),
     );
+  }
+  String parseDescription(String? description) {
+    if (description == null || description.isEmpty) {
+      return "No description available.";
+    }
+
+    try {
+      if (description.startsWith('{')) {
+        // Parse JSON if it starts with '{'
+        final decoded = jsonDecode(description);
+
+        // Ensure 'ops' exists and is a List
+        if (decoded is Map<String, dynamic> && decoded['ops'] is List) {
+          return (decoded['ops'] as List<dynamic>)
+              .map((op) => op['insert']?.toString() ?? "")
+              .join();
+        } else {
+          print("Invalid JSON structure: $decoded");
+          return "Invalid JSON structure.";
+        }
+      } else {
+        // Treat as plain text
+        return description;
+      }
+    } catch (e) {
+      print("Error parsing description: $e");
+      return "Error parsing description.";
+    }
   }
 
 
