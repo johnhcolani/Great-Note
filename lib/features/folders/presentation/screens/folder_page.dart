@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -9,12 +10,16 @@ import 'package:greate_note_app/core/widgets/custom_floating_action_button.dart'
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/database/database_export_import.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../app_background/app_background.dart';
 import '../../../notes/data/data_sources/note_local_datasource.dart';
 import '../../../notes/presentation/screens/note_page.dart';
 import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
+import 'package:sqflite/sqflite.dart';
+
 
 class FolderPage extends StatefulWidget {
 
@@ -28,8 +33,9 @@ class FolderPage extends StatefulWidget {
 
 class _FolderPageState extends State<FolderPage> {
   bool isFilePickerActive = false;
-  final DatabaseExportImport _dbHandler = DatabaseExportImport();
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   String _searchQuery = '';
 
   BannerAd? _bannerAd;
@@ -44,6 +50,183 @@ class _FolderPageState extends State<FolderPage> {
     _loadBannerAd();
     super.initState();
   }
+
+  Future<String> getExternalBackupFilePath() async {
+    final Directory? externalDir = await getExternalStorageDirectory();
+    if (externalDir != null) {
+      return '${externalDir.path}/app_backup.db';
+    } else {
+      throw Exception("Unable to access external storage.");
+    }
+  }
+  Future<void> importDatabaseFromFile(BuildContext context) async {
+    try {
+      // Open a file picker dialog to let the user select a backup file
+      FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+      if (result != null) {
+        // Get the selected file path
+        String filePath = result.files.single.path!;
+        final dbPath = await getDatabasesPath();
+        final dbFile = File(join(dbPath, 'app_database.db'));
+        final backupFile = File(filePath);
+
+        if (await backupFile.exists()) {
+          await backupFile.copy(dbFile.path);
+          print("Database imported from ${backupFile.path}");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Database imported successfully!")),
+          );
+          context.read<FolderBloc>().add(LoadFolders()); // Reload folders
+        } else {
+          throw Exception("Selected file not found.");
+        }
+      } else {
+        print("No file selected.");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No file selected.")),
+        );
+      }
+    } catch (e) {
+      print("Error importing database: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to import database.")),
+      );
+    }
+  }
+
+  void showImportOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.download),
+              title: const Text("Import from Saved Backup"),
+              onTap: () {
+                Navigator.pop(context);
+                importDatabase(context); // Import from the predefined backup path
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_open),
+              title: const Text("Import from File"),
+              onTap: () {
+                Navigator.pop(context);
+                importDatabaseFromFile(context); // Import from a user-selected file
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void showExportOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.save),
+              title: const Text("Save Backup Locally"),
+              onTap: () {
+                Navigator.pop(context);
+                exportDatabase(context); // Save backup locally
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.share),
+              title: const Text("Share Backup"),
+              onTap: () {
+                Navigator.pop(context);
+                exportAndShareDatabase(context); // Share backup file
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Future<void> exportAndShareDatabase(BuildContext context) async {
+    try {
+      final dbPath = await getDatabasesPath();
+      final dbFile = File(join(dbPath, 'app_database.db'));
+
+      if (await dbFile.exists()) {
+        // Create an XFile from the database file
+        final XFile backupFile = XFile(dbFile.path);
+
+        // Share the file using shareXFiles
+        await Share.shareXFiles(
+          [backupFile],
+          text: 'Database Backup',
+        );
+      } else {
+        throw Exception("Database file not found.");
+      }
+    } catch (e) {
+      print("Error sharing database: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to export and share database.")),
+      );
+    }
+  }
+  Future<void> exportDatabase(BuildContext context) async {
+    try {
+      final dbPath = await getDatabasesPath();
+      final dbFile = File(join(dbPath, 'app_database.db'));
+      final backupPath = await getExternalBackupFilePath();
+      final backupFile = File(backupPath);
+
+      if (await dbFile.exists()) {
+        await dbFile.copy(backupFile.path);
+        print("Database exported to ${backupFile.path}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Database exported to: $backupPath")),
+        );
+      } else {
+        throw Exception("Database file not found.");
+      }
+    } catch (e) {
+      print("Error exporting database: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to export database.")),
+      );
+    }
+  }
+
+
+  Future<void> importDatabase(BuildContext context) async {
+    try {
+      final dbPath = await getDatabasesPath();
+      final dbFile = File(join(dbPath, 'app_database.db'));
+      final backupPath = await getExternalBackupFilePath();
+      final backupFile = File(backupPath);
+
+      if (await backupFile.exists()) {
+        await backupFile.copy(dbFile.path);
+        print("Database imported from ${backupFile.path}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Database imported successfully!")),
+        );
+        context.read<FolderBloc>().add(LoadFolders()); // Reload folders
+      } else {
+        throw Exception("Backup file not found.");
+      }
+    } catch (e) {
+      print("Error importing database: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to import database.")),
+      );
+    }
+  }
+
+
+
 
   void _loadBannerAd() {
     _bannerAd = BannerAd(
@@ -80,6 +263,7 @@ class _FolderPageState extends State<FolderPage> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      key: _scaffoldKey,
       extendBodyBehindAppBar: true,
       appBar: GlossyAppBar(
         title: 'Folder Page',
@@ -115,29 +299,18 @@ class _FolderPageState extends State<FolderPage> {
                     context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
                   },
                   icon: const Icon(Icons.image)),
-
+              IconButton(
+                icon: const Icon(Icons.file_download),
+                onPressed: () => showImportOptions(context),
+              ),
+              IconButton(
+                icon: const Icon(Icons.file_upload),
+                onPressed: () => showExportOptions(context),
+              ),
             ],
           ),
 
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'Export') {
-                await _dbHandler.exportDatabase();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Database exported successfully!')),
-                );
-              } else if (value == 'Import') {
-                await _dbHandler.importDatabase();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Database imported successfully!')),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'Export', child: Text('Export Database')),
-              const PopupMenuItem(value: 'Import', child: Text('Import Database')),
-            ],
-          ),
+
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
