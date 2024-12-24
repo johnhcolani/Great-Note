@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
 import '../../../app_background/app_background.dart';
 import '../../../folders/presentation/bloc/folder_bloc.dart';
@@ -12,6 +16,7 @@ import '../../../folders/presentation/bloc/folder_event.dart';
 import '../../../../core/widgets/custom_floating_action_button.dart';
 import '../bloc/note_bloc.dart';
 import 'note_edit_page.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class NotePage extends StatefulWidget {
   final int folderId;
@@ -30,6 +35,132 @@ class _NotePageState extends State<NotePage> {
   void initState() {
     super.initState();
     _folderName = widget.folderName;
+  }
+
+  void shareAsText(BuildContext context, String title, String description) {
+    final contentToShare = "Title: $title\n\nDescription:\n$description";
+    Share.share(contentToShare, subject: title);
+  }
+
+  Future<void> shareAsPdf(
+      BuildContext context, String title, String description) async {
+    try {
+      final pdf = pw.Document();
+
+      // Add content to PDF
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text("Title: $title",
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 16),
+                pw.Text("Description:",
+                    style: pw.TextStyle(
+                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 8),
+                pw.Text(description, style: pw.TextStyle(fontSize: 12)),
+              ],
+            );
+          },
+        ),
+      );
+
+      // Save the PDF to a temporary directory
+      final output = await getTemporaryDirectory();
+      final file = File("${output.path}/note.pdf");
+      await file.writeAsBytes(await pdf.save());
+
+      // Share the file using XFile
+      final xFile = XFile(file.path);
+      await Share.shareXFiles([xFile], text: "Note: $title");
+    } catch (e) {
+      print("Error creating or sharing PDF: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Unable to share the note as a PDF.")),
+      );
+    }
+  }
+
+  void showShareOptions(
+      BuildContext context, String title, String description) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.text_fields),
+              title: Text('Share as Text'),
+              onTap: () {
+                Navigator.pop(context); // Close the modal
+                shareAsText(context, title, description);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.picture_as_pdf),
+              title: Text('Share as PDF'),
+              onTap: () {
+                Navigator.pop(context); // Close the modal
+                shareAsPdf(context, title, description);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.print),
+              title: Text('Print'),
+              onTap: () {
+                Navigator.pop(context); // Close the modal
+                printNote(context, title, description);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> printNote(
+      BuildContext context, String title, String description) async {
+    try {
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async {
+          final pdf = pw.Document();
+
+          // Add content to the PDF
+          pdf.addPage(
+            pw.Page(
+              build: (pw.Context context) {
+                return pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text("Title: $title",
+                        style: pw.TextStyle(
+                            fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    pw.SizedBox(height: 16),
+                    pw.Text("Description:",
+                        style: pw.TextStyle(
+                            fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    pw.SizedBox(height: 8),
+                    pw.Text(description, style: pw.TextStyle(fontSize: 12)),
+                  ],
+                );
+              },
+            ),
+          );
+
+          // Return the PDF as bytes
+          return pdf.save();
+        },
+      );
+    } catch (e) {
+      print("Error during printing: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Unable to print the note. Please try again.")),
+      );
+    }
   }
 
   @override
@@ -136,23 +267,16 @@ class _NotePageState extends State<NotePage> {
                                         : Icons.share,
                                     color: theme.iconTheme.color,
                                   ),
-                                  onPressed: () async {
-                                    try {
-                                      final noteTitle = note['title'] ?? "Untitled Note";
-                                      final noteDescription = parseDescription(note['description']);
+                                  onPressed: () {
+                                    final noteTitle =
+                                        note['title'] ?? "Untitled Note";
+                                    final noteDescription =
+                                        parseDescription(note['description']);
 
-                                      // Combine title and description for sharing
-                                      final contentToShare = "Title: $noteTitle\n\nDescription:\n$noteDescription";
-
-                                      await Share.share(contentToShare, subject: noteTitle);
-                                    } catch (e) {
-                                      print("Error during sharing: $e");
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("Unable to share the note. Please try again.")),
-                                      );
-                                    }
+                                    // Trigger the sharing options modal
+                                    showShareOptions(
+                                        context, noteTitle, noteDescription);
                                   },
-
                                 ),
                               ],
                             ),
@@ -225,7 +349,6 @@ class _NotePageState extends State<NotePage> {
       if (description.startsWith('{') || description.startsWith('[')) {
         final decoded = jsonDecode(description);
 
-        // Ensure the JSON structure has 'ops' and extract text
         if (decoded is List<dynamic>) {
           return decoded
               .map((op) => op['insert']?.toString().trim() ?? "")
@@ -248,7 +371,6 @@ class _NotePageState extends State<NotePage> {
       return "Error parsing description.";
     }
   }
-
 
   // Method to show a dialog for editing the folder name
   void _showEditFolderDialog(BuildContext context) {
