@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,14 +52,16 @@ class _NotePageState extends State<NotePage> {
               _showEditFolderDialog(context);
             },
           ),
-
-        ], elevation: 0,
+        ],
+        elevation: 0,
       ),
       body: Stack(
         children: [
           const AppBackground(),
           Container(
-            color: isDarkMode ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.1),
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.5)
+                : Colors.white.withOpacity(0.1),
           ),
           BlocBuilder<NoteBloc, NoteState>(
             builder: (context, state) {
@@ -86,7 +87,8 @@ class _NotePageState extends State<NotePage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: Icon(Icons.edit, color: theme.iconTheme.color),
+                                  icon: Icon(Icons.edit,
+                                      color: theme.iconTheme.color),
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -94,7 +96,8 @@ class _NotePageState extends State<NotePage> {
                                           folderId: widget.folderId,
                                           noteId: note['id'],
                                           initialTitle: note['title'],
-                                          initialDescription: note['description'],
+                                          initialDescription:
+                                              note['description'],
                                         ),
                                       ),
                                     );
@@ -102,7 +105,9 @@ class _NotePageState extends State<NotePage> {
                                 ),
                                 IconButton(
                                   icon: Icon(
-                                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                    isExpanded
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
                                     color: theme.iconTheme.color,
                                   ),
                                   onPressed: () {
@@ -116,14 +121,17 @@ class _NotePageState extends State<NotePage> {
                                   },
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.delete, color: theme.iconTheme.color),
+                                  icon: Icon(Icons.delete,
+                                      color: theme.iconTheme.color),
                                   onPressed: () {
-                                    _showDeleteConfirmationDialog(context, note['id']);
+                                    _showDeleteConfirmationDialog(
+                                        context, note['id']);
                                   },
                                 ),
                                 IconButton(
                                   icon: Icon(
-                                    Theme.of(context).platform == TargetPlatform.iOS
+                                    Theme.of(context).platform ==
+                                            TargetPlatform.iOS
                                         ? CupertinoIcons.share
                                         : Icons.share,
                                     color: theme.iconTheme.color,
@@ -131,57 +139,33 @@ class _NotePageState extends State<NotePage> {
                                   onPressed: () async {
                                     try {
                                       // Parse the description safely
-                                      final contentToShare = parseDescription(note['description']);
-                                      final noteTitle = note['title'] ?? "Untitled Note";
+                                      final contentToShare =
+                                          parseDescription(note['description']);
+                                      final noteTitle =
+                                          note['title'] ?? "Untitled Note";
 
-                                      print("Content to share: $contentToShare");
+                                      print(
+                                          "Content to share: $contentToShare");
                                       print("Note title: $noteTitle");
 
                                       // Share content
-                                      await Share.share(contentToShare, subject: noteTitle);
+                                      await Share.share(contentToShare,
+                                          subject: noteTitle);
                                     } catch (e) {
                                       print("Error during sharing: $e");
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("Unable to share the note. Please try again.")),
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                "Unable to share the note. Please try again.")),
                                       );
                                     }
                                   },
                                 ),
-
-
                               ],
                             ),
                           ),
-                          if (isExpanded)
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Description:", style: theme.textTheme.bodyMedium),
-                                  const SizedBox(height: 8),
-                                  if (note['description'] != null && note['description'].isNotEmpty)
-                                    quill.QuillEditor(
-                                      controller: quill.QuillController(
-                                        document: quill.Document.fromJson(
-                                          jsonDecode(note['description']),
-                                        ),
-                                        selection: const TextSelection.collapsed(offset: 0),
-                                      ),
-                                      focusNode: FocusNode(),
-                                      scrollController: ScrollController(),
-                                    )
-                                  else
-                                    Text('No description available.', style: theme.textTheme.bodyMedium),
 
-
-
-
-
-                              ],
-                            ),
-
-                          ),
                           if (isExpanded)
                             Padding(
                               padding: const EdgeInsets.all(16.0),
@@ -195,18 +179,23 @@ class _NotePageState extends State<NotePage> {
                                   const SizedBox(height: 8),
                                   if (note['description'] != null &&
                                       note['description'].isNotEmpty)
-                                  quill.QuillEditor(
-                                    controller: quill.QuillController(
-                                      document: quill.Document.fromJson(
-                                        jsonDecode(note['description']),
+                                    quill.QuillEditor(
+                                      controller: quill.QuillController(
+                                        document: quill.Document.fromJson(
+                                          jsonDecode(note['description']),
+                                        ),
+                                        selection:
+                                            const TextSelection.collapsed(
+                                                offset: 0),
                                       ),
-                                      selection: const TextSelection.collapsed(offset: 0),
+                                      focusNode: FocusNode(),
+                                      scrollController: ScrollController(),
+                                    )
+                                  else
+                                    Text(
+                                      'No description available.',
+                                      style: theme.textTheme.bodyMedium,
                                     ),
-                                    focusNode: FocusNode(),
-                                    scrollController: ScrollController(),
-                    )else Text('No description available.',style: theme.textTheme.bodyMedium,
-
-                                  ),
                                 ],
                               ),
                             ),
@@ -234,6 +223,7 @@ class _NotePageState extends State<NotePage> {
       ),
     );
   }
+
   String parseDescription(String? description) {
     if (description == null || description.isEmpty) {
       return "No description available.";
@@ -263,22 +253,19 @@ class _NotePageState extends State<NotePage> {
     }
   }
 
-
   // Method to show a dialog for editing the folder name
   void _showEditFolderDialog(BuildContext context) {
     final folderNameController = TextEditingController(text: _folderName);
 
     showDialog(
-
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-backgroundColor: const Color(0xFDEFEEEA),
+          backgroundColor: const Color(0xFDEFEEEA),
           title: const Text('Edit Folder Name'),
           content: TextFormField(
             controller: folderNameController,
             decoration: const InputDecoration(labelText: 'Folder Name'),
-
           ),
           actions: <Widget>[
             TextButton(
@@ -293,14 +280,16 @@ backgroundColor: const Color(0xFDEFEEEA),
                 String newFolderName = folderNameController.text.trim();
                 if (newFolderName.isNotEmpty) {
                   // Capitalize the first letter of the folder name
-                  newFolderName = newFolderName[0].toUpperCase() + newFolderName.substring(1);
+                  newFolderName = newFolderName[0].toUpperCase() +
+                      newFolderName.substring(1);
                   // Update the folder name in the Bloc
                   context.read<FolderBloc>().add(UpdateFolderName(
-                    folderId: widget.folderId,
-                    newName: newFolderName,
-                  ));
+                        folderId: widget.folderId,
+                        newName: newFolderName,
+                      ));
                   setState(() {
-                    _folderName = newFolderName; // Update the folder name locally
+                    _folderName =
+                        newFolderName; // Update the folder name locally
                   });
                   Navigator.of(context).pop(); // Close the dialog
                 }
@@ -331,9 +320,9 @@ backgroundColor: const Color(0xFDEFEEEA),
               child: const Text('Delete'),
               onPressed: () {
                 context.read<NoteBloc>().add(DeleteNote(
-                  noteId: noteId,
-                  folderId: widget.folderId,
-                ));
+                      noteId: noteId,
+                      folderId: widget.folderId,
+                    ));
                 Navigator.of(context).pop(); // Close dialog
               },
             ),
@@ -353,24 +342,28 @@ backgroundColor: const Color(0xFDEFEEEA),
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFDEFEEEA),
-
-          title: const Text('Add Note',style: TextStyle(color: Colors.blueGrey),),
+          title: const Text(
+            'Add Note',
+            style: TextStyle(color: Colors.blueGrey),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
                 controller: titleController,
-                decoration:  InputDecoration(
+                decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.grey, width: 2.0),
+                      borderSide:
+                          const BorderSide(color: Colors.grey, width: 2.0),
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0),
+                      borderSide:
+                          const BorderSide(color: Colors.blueGrey, width: 2.0),
                       borderRadius: BorderRadius.circular(10.0),
                     ),
-                    labelText: 'Title',labelStyle: TextStyle(color: Colors.grey.shade500)),
-
+                    labelText: 'Title',
+                    labelStyle: TextStyle(color: Colors.grey.shade500)),
               ),
               // TextFormField(
               //   controller: descriptionController,
@@ -389,19 +382,19 @@ backgroundColor: const Color(0xFDEFEEEA),
               child: const Text('Add'),
               onPressed: () {
                 String title = titleController.text.trim();
-                title = title[0].toUpperCase()+title.substring(1);
+                title = title[0].toUpperCase() + title.substring(1);
 
                 final description = descriptionController.text.trim();
                 if (title.isNotEmpty
-                   // && description.isNotEmpty
-                ) {
+                    // && description.isNotEmpty
+                    ) {
                   context.read<NoteBloc>().add(
-                    AddNote(
-                      folderId: widget.folderId,
-                      title: title,
-                      description: description,
-                    ),
-                  );
+                        AddNote(
+                          folderId: widget.folderId,
+                          title: title,
+                          description: description,
+                        ),
+                      );
                   Navigator.of(context).pop(); // Close the dialog
                 }
               },
