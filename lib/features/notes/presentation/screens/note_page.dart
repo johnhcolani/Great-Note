@@ -138,34 +138,25 @@ class _NotePageState extends State<NotePage> {
                                   ),
                                   onPressed: () async {
                                     try {
-                                      // Parse the description safely
-                                      final contentToShare =
-                                          parseDescription(note['description']);
-                                      final noteTitle =
-                                          note['title'] ?? "Untitled Note";
+                                      final noteTitle = note['title'] ?? "Untitled Note";
+                                      final noteDescription = parseDescription(note['description']);
 
-                                      print(
-                                          "Content to share: $contentToShare");
-                                      print("Note title: $noteTitle");
+                                      // Combine title and description for sharing
+                                      final contentToShare = "Title: $noteTitle\n\nDescription:\n$noteDescription";
 
-                                      // Share content
-                                      await Share.share(contentToShare,
-                                          subject: noteTitle);
+                                      await Share.share(contentToShare, subject: noteTitle);
                                     } catch (e) {
                                       print("Error during sharing: $e");
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                "Unable to share the note. Please try again.")),
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Unable to share the note. Please try again.")),
                                       );
                                     }
                                   },
+
                                 ),
                               ],
                             ),
                           ),
-
                           if (isExpanded)
                             Padding(
                               padding: const EdgeInsets.all(16.0),
@@ -230,28 +221,34 @@ class _NotePageState extends State<NotePage> {
     }
 
     try {
-      if (description.startsWith('{')) {
-        // Parse JSON if it starts with '{'
+      // Check if the description starts as a JSON object
+      if (description.startsWith('{') || description.startsWith('[')) {
         final decoded = jsonDecode(description);
 
-        // Ensure 'ops' exists and is a List
-        if (decoded is Map<String, dynamic> && decoded['ops'] is List) {
+        // Ensure the JSON structure has 'ops' and extract text
+        if (decoded is List<dynamic>) {
+          return decoded
+              .map((op) => op['insert']?.toString().trim() ?? "")
+              .join()
+              .trim();
+        } else if (decoded is Map<String, dynamic> && decoded['ops'] is List) {
           return (decoded['ops'] as List<dynamic>)
-              .map((op) => op['insert']?.toString() ?? "")
-              .join();
+              .map((op) => op['insert']?.toString().trim() ?? "")
+              .join()
+              .trim();
         } else {
-          print("Invalid JSON structure: $decoded");
-          return "Invalid JSON structure.";
+          return "Invalid description format.";
         }
       } else {
-        // Treat as plain text
-        return description;
+        // Treat as plain text if not JSON
+        return description.trim();
       }
     } catch (e) {
       print("Error parsing description: $e");
       return "Error parsing description.";
     }
   }
+
 
   // Method to show a dialog for editing the folder name
   void _showEditFolderDialog(BuildContext context) {
