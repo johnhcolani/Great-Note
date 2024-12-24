@@ -42,8 +42,7 @@ class _NotePageState extends State<NotePage> {
     Share.share(contentToShare, subject: title);
   }
 
-  Future<void> shareAsPdf(
-      BuildContext context, String title, String description) async {
+  Future<void> shareAsPdf(BuildContext context, String title, String description) async {
     try {
       final pdf = pw.Document();
 
@@ -55,12 +54,10 @@ class _NotePageState extends State<NotePage> {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text("Title: $title",
-                    style: pw.TextStyle(
-                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 16),
                 pw.Text("Description:",
-                    style: pw.TextStyle(
-                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 8),
                 pw.Text(description, style: pw.TextStyle(fontSize: 12)),
               ],
@@ -74,53 +71,65 @@ class _NotePageState extends State<NotePage> {
       final file = File("${output.path}/note.pdf");
       await file.writeAsBytes(await pdf.save());
 
-      // Share the file using XFile
-      final xFile = XFile(file.path);
-      await Share.shareXFiles([xFile], text: "Note: $title");
+      // Add Print Option in Share as PDF
+      Printing.sharePdf(
+        bytes: await pdf.save(),
+        filename: "note.pdf",
+      );
     } catch (e) {
       print("Error creating or sharing PDF: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Unable to share the note as a PDF.")),
+        const SnackBar(content: Text("Unable to share the note as a PDF.")),
       );
     }
   }
 
-  void showShareOptions(
-      BuildContext context, String title, String description) {
+  void showShareOptions(BuildContext context, String title, String description) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: Icon(Icons.text_fields),
-              title: Text('Share as Text'),
-              onTap: () {
-                Navigator.pop(context); // Close the modal
-                shareAsText(context, title, description);
-              },
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Share as Text
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.text_fields, size: 30),
+                      onPressed: () {
+                        Navigator.pop(context); // Close the modal
+                        shareAsText(context, title, description);
+                      },
+                    ),
+                    const Text('Share as Text'),
+                  ],
+                ),
+                // Share as PDF
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.picture_as_pdf, size: 30),
+                      onPressed: () {
+                        Navigator.pop(context); // Close the modal
+                        shareAsPdf(context, title, description);
+                      },
+                    ),
+                    const Text('Share as PDF'),
+                  ],
+                ),
+              ],
             ),
-            ListTile(
-              leading: Icon(Icons.picture_as_pdf),
-              title: Text('Share as PDF'),
-              onTap: () {
-                Navigator.pop(context); // Close the modal
-                shareAsPdf(context, title, description);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.print),
-              title: Text('Print'),
-              onTap: () {
-                Navigator.pop(context); // Close the modal
-                printNote(context, title, description);
-              },
-            ),
-          ],
+          ),
         );
       },
     );
   }
+
 
   Future<void> printNote(
       BuildContext context, String title, String description) async {

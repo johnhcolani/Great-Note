@@ -32,7 +32,7 @@ class _FolderPageState extends State<FolderPage> {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
   final String adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-7380986533735423/6731935085' // Test ad unit for Android
+      ? 'ca-app-pub-7380986533735423/1251591272' // Test ad unit for Android
       : 'ca-app-pub-7380986533735423/8992675455'; // Test ad unit for iOS
 
   @override
@@ -50,16 +50,22 @@ class _FolderPageState extends State<FolderPage> {
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           setState(() {
-            _isAdLoaded = true;
+            _isAdLoaded = true; // Ad successfully loaded
           });
+          debugPrint('Banner ad loaded successfully.');
         },
         onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          debugPrint('Failed to load ad: $error');
+          debugPrint('Failed to load banner ad: ${error.responseInfo}');
+          ad.dispose(); // Dispose of the ad object
+          // Retry loading the ad after a delay
+          Future.delayed(const Duration(seconds: 10), () {
+            _loadBannerAd();
+          });
         },
       ),
-    )..load();
+    )..load(); // Load the banner ad
   }
+
 
 
 
