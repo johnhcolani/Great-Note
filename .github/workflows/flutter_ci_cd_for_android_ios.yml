@@ -28,7 +28,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
+      - name: Set up Keystore
+        run: |
+          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > android/app/my-release-key.jks
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
