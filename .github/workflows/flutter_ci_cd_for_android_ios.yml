@@ -37,10 +37,10 @@ jobs:
       - name: Increment Android Version
         run: |
           # Increment versionCode in app/build.gradle
-          sed -i 's/versionCode [0-9]*/versionCode $(( $(grep versionCode android/app/build.gradle | awk '\''{print $2}'\'') + 1 ))/' android/app/build.gradle
-                    
+          sed -i "s/versionCode [0-9]*/versionCode $(( $(grep versionCode android/app/build.gradle | awk '{print $2}') + 1 ))/" android/app/build.gradle
+                
           # Increment versionName in app/build.gradle (add timestamp)
-          sed -i 's/versionName "[0-9\.]*"/versionName "9.'$(date +%Y%m%d%H%M%S)'"/' android/app/build.gradle
+          sed -i "s/versionName \"[0-9\.]*\"/versionName \"9.$(date +%Y%m%d%H%M%S)\"/" android/app/build.gradle
 
       - name: Increment Flutter Version in pubspec.yaml
         run: |
