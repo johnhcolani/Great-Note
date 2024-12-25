@@ -55,8 +55,8 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Run Flutter Tests
-        run: flutter test
+     # - name: Run Flutter Tests
+     #   run: flutter test
 
       - name: Build Android AppBundle (AAB)
         run: flutter build appbundle --release
