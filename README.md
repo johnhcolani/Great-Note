@@ -16,7 +16,7 @@ The **Great-Note** app provides a seamless experience for creating, editing, and
 #### iOS View & Android View
 <div style="display: flex; justify-content: space-around; align-items: center;">
    iOS View
-  <img src="https://github.com/user-attachments/assets/069fa9dc-0c3e-4c6a-81ff-e323dea452a1" width="100px" alt="Screenshot">
+  <img src="https://github.com/user-attachments/assets/069fa9dc-0c3e-4c6a-81ff-e323dea452a1" width="112px" alt="Screenshot">
    Android View
   <img src="https://github.com/user-attachments/assets/b218bbe8-d256-42c5-baef-d4d6eb260290" width="100px" alt="Screenshot">
 </div>
