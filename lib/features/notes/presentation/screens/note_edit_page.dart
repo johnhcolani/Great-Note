@@ -12,12 +12,14 @@ class NoteEditPage extends StatefulWidget {
   final int noteId;
   final String initialTitle;
   final String initialDescription; // This should be the Quill Delta JSON string
+  final double initialScrollOffset;
 
   const NoteEditPage({super.key, 
     required this.folderId,
     required this.noteId,
     required this.initialTitle,
     required this.initialDescription,
+    this. initialScrollOffset =0,
   });
 
   @override
@@ -26,11 +28,15 @@ class NoteEditPage extends StatefulWidget {
 
 class _NoteEditPageState extends State<NoteEditPage> {
   late TextEditingController _titleController;
+  late ScrollController _scrollController;
+
   QuillController _quillController = QuillController.basic();
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController(initialScrollOffset: widget.initialScrollOffset);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Now safe to interact with the widget
     });
@@ -58,6 +64,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   void dispose() {
     super.dispose();
     _quillController.dispose();
+    _scrollController.dispose();
   }
   @override
   Widget build(BuildContext context) {
@@ -91,13 +98,16 @@ class _NoteEditPageState extends State<NoteEditPage> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: QuillEditor.basic(
-                    controller: _quillController,
-                  configurations: const QuillEditorConfigurations(),
-                    scrollController:
-                        ScrollController(), // Manages scrolling within the editor
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: QuillEditor.basic(
+                      controller: _quillController,
+                    configurations: const QuillEditorConfigurations(),
+                      scrollController:
+                          ScrollController(), // Manages scrolling within the editor
 
-                    focusNode: FocusNode(), // Focus on the editor
+                      focusNode: FocusNode(), // Focus on the editor
+                    ),
                   ),
                 ),
               ),

@@ -101,8 +101,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   device_info_plus: 97af1d7e84681a90d0693e63169a5d50e0839a0d
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_keyboard_visibility_temp_fork: 442dadca3b81868a225cd6a2f605bffff1215844
-  gal: 61e868295d28fe67ffa297fae6dacebf56fd53e1
+  flutter_keyboard_visibility_temp_fork: 8a8809c4129e31d25fca77446e0f3fd548122ced
+  gal: 6a522c75909f1244732d4596d11d6a2f86ff37a5
   Google-Mobile-Ads-SDK: 13e6e98edfd78ad8d8a791edb927658cc260a56f
   google_mobile_ads: 2a538d8e42b1813809782792e48f8cf4374c2180
   GoogleUserMessagingPlatform: a8b56893477f67212fbc8411c139e61d463349f5
@@ -110,7 +110,7 @@ SPEC CHECKSUMS:
   irondash_engine_context: 3458bf979b90d616ffb8ae03a150bafe2e860cc9
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   printing: 233e1b73bd1f4a05615548e9b5a324c98588640b
-  quill_native_bridge_ios: 277bdf5bf0fa5d7a12999556b415a5c63dd76ec4
+  quill_native_bridge_ios: 2b01d585fcc73d0f5eed78c0bd244ee564b06f5a
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   super_native_extensions: 4916b3c627a9c7fffdc48a23a9eca0b1ac228fa7
