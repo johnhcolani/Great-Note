@@ -99,7 +99,7 @@ class _NotePageState extends State<NotePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.text_fields, size: 30),
+                      icon: const Icon(Icons.text_fields, size: 30),
                       onPressed: () {
                         Navigator.pop(context); // Close the modal
                         shareAsText(context, title, description);
@@ -113,7 +113,7 @@ class _NotePageState extends State<NotePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.picture_as_pdf, size: 30),
+                      icon: const Icon(Icons.picture_as_pdf, size: 30),
                       onPressed: () {
                         Navigator.pop(context); // Close the modal
                         shareAsPdf(context, title, description);
@@ -211,6 +211,8 @@ class _NotePageState extends State<NotePage> {
                 return ListView.builder(
                   itemCount: state.notes.length,
                   itemBuilder: (context, index) {
+                    final ScrollController noteScrollController = ScrollController();
+
                     final note = state.notes[index];
                     final isExpanded = _expandedNotes.contains(note['id']);
                     return Card(
@@ -238,6 +240,7 @@ class _NotePageState extends State<NotePage> {
                                           initialTitle: note['title'],
                                           initialDescription:
                                               note['description'],
+                                          initialScrollOffset: noteScrollController.offset-30,
                                         ),
                                       ),
                                     );
@@ -291,36 +294,42 @@ class _NotePageState extends State<NotePage> {
                             ),
                           ),
                           if (isExpanded)
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Description:",
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (note['description'] != null &&
-                                      note['description'].isNotEmpty)
-                                    quill.QuillEditor(
-                                      controller: quill.QuillController(
-                                        document: quill.Document.fromJson(
-                                          jsonDecode(note['description']),
-                                        ),
-                                        selection:
-                                            const TextSelection.collapsed(
-                                                offset: 0),
+                            SizedBox(
+                              height:MediaQuery.of(context).size.height * 0.8,
+                              child: SingleChildScrollView(
+                                controller: noteScrollController,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Description:",
+                                        style: theme.textTheme.bodyMedium,
                                       ),
-                                      focusNode: FocusNode(),
-                                      scrollController: ScrollController(),
-                                    )
-                                  else
-                                    Text(
-                                      'No description available.',
-                                      style: theme.textTheme.bodyMedium,
-                                    ),
-                                ],
+                                      const SizedBox(height: 8),
+                                      if (note['description'] != null &&
+                                          note['description'].isNotEmpty)
+                                        quill.QuillEditor(
+                                          controller: quill.QuillController(
+                                            document: quill.Document.fromJson(
+                                              jsonDecode(note['description']),
+                                            ),
+                                            selection:
+                                                const TextSelection.collapsed(
+                                                    offset: 0),
+                                          ),
+                                          focusNode: FocusNode(),
+                                          scrollController: ScrollController(),
+                                        )
+                                      else
+                                        Text(
+                                          'No description available.',
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                         ],
