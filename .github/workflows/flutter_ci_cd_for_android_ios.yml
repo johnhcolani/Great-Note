@@ -66,13 +66,20 @@ jobs:
           build_number=${current_version##*+}
           new_build_number=$((build_number + 1))
           sed -i "s/^version: .*/version: 2.3.7+$(( $(grep '^version:' pubspec.yaml | awk -F+ '{print $2}') + 1 ))/" pubspec.yaml
+      - name: Debug key.properties
+        run: |
+          cat android/key.properties
 
+      - name: Clean Build Directory
+        run: flutter clean
 
       - name: Install Dependencies
         run: flutter pub get
 
      # - name: Run Flutter Tests
      #   run: flutter test
+
+
 
       - name: Build Android AppBundle (AAB)
         run: flutter build appbundle --release
