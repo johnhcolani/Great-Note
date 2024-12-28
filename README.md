@@ -13,14 +13,15 @@ The **Great-Note** app provides a seamless experience for creating, editing, and
 ---
 
 ### **Platform-Specific Views**
+#### iOS View & Android View
+<div style="display: flex; justify-content: space-around; align-items: center;">
+   iOS View
+  <img src="https://github.com/user-attachments/assets/069fa9dc-0c3e-4c6a-81ff-e323dea452a1" width="100px" alt="Screenshot">
+   Android View
+  <img src="https://github.com/user-attachments/assets/b218bbe8-d256-42c5-baef-d4d6eb260290" width="100px" alt="Screenshot">
+</div>
 
-#### iOS View
-![iOS Screenshot](../../../../var/folders/9f/8k8t0w150811_4901vtg12mh0000gn/T/simulator_screenshot_5FCAF106-FD60-489E-9590-35B0D3808E33.png)
 
-#### Android View
-![Android Screenshot](../../Desktop/Screenshot_20241228_082432.png)
-
-*Replace `path-to-ios-image` and `path-to-android-image` with the actual file paths or URLs of your images.*
 
 ---
 
