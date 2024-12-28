@@ -40,6 +40,8 @@ jobs:
 
       - name: Debug Keystore Placement
         run: |
+          pwd
+          ls -l
           ls -l android/
           ls -l android/app/
 
