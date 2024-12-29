@@ -32,13 +32,19 @@ jobs:
       - name: Set up Keystore
         run: |
           mkdir -p android
-          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > android/my-release-key.jks
-
+          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > android/app/my-release-key.jks
+      - name: Set up key.properties
+        run: |
+          echo "storePassword=Aran2012" > android/key.properties
+          echo "keyPassword=Aran2012" >> android/key.properties
+          echo "keyAlias=my-key-alias" >> android/key.properties
+          echo "storeFile=app/my-release-key.jks" >> android/key.properties
       - name: Debug Keystore Placement
         run: |
           pwd
           ls -l
           ls -l android/
+          ls -l android/key.properties
          
 
       - name: Set up Flutter
@@ -62,9 +68,6 @@ jobs:
           build_number=${current_version##*+}
           new_build_number=$((build_number + 1))
           sed -i "s/^version: .*/version: 2.3.7+$(( $(grep '^version:' pubspec.yaml | awk -F+ '{print $2}') + 1 ))/" pubspec.yaml
-      - name: Debug key.properties
-        run: |
-          cat android/key.properties
 
       - name: Clean Build Directory
         run: flutter clean
