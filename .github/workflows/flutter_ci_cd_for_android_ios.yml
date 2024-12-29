@@ -29,21 +29,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create Directory for Keystore
-        run: |
-          mkdir -p ../app
-
       - name: Set up Keystore
         run: |
-          mkdir -p android/app
-          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > android/app/my-release-key.jks
+          mkdir -p android
+          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > android/my-release-key.jks
 
       - name: Debug Keystore Placement
         run: |
           pwd
           ls -l
           ls -l android/
-          ls -l android/app/
+         
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
