@@ -31,20 +31,19 @@ jobs:
 
       - name: Set up Keystore
         run: |
-          mkdir -p android
-          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > android/app/my-release-key.jks
+          mkdir -p ../app
+          echo "${{ secrets.MY_RELEASE_KEY }}" | base64 --decode > ../app/my-release-key.jks
       - name: Set up key.properties
         run: |
           echo "storePassword=Aran2012" > android/key.properties
           echo "keyPassword=Aran2012" >> android/key.properties
           echo "keyAlias=my-key-alias" >> android/key.properties
-          echo "storeFile=app/my-release-key.jks" >> android/key.properties
+          echo "storeFile=../app/my-release-key.jks" >> android/key.properties
       - name: Debug Keystore Placement
         run: |
           pwd
-          ls -l
           ls -l android/
-          ls -l android/key.properties
+          ls -l android/app
          
 
       - name: Set up Flutter
