@@ -7,6 +7,7 @@ import 'package:greate_note_app/features/app_background/data/data_source/backgro
 import 'package:greate_note_app/features/splash_feature/presentation/screens/bloc/splash_bloc.dart';
 import 'package:greate_note_app/features/splash_feature/presentation/screens/splash_screen.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'core/database/app_database.dart';
 import 'features/folders/presentation/bloc/folder_bloc.dart';
@@ -16,6 +17,8 @@ import 'features/notes/presentation/bloc/note_bloc.dart';
 import 'features/folders/data/datasources/folder_local_datasource.dart';
 
 void main() async {
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
   WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
 

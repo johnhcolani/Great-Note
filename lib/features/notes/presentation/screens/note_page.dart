@@ -29,14 +29,28 @@ class NotePage extends StatefulWidget {
 }
 
 class _NotePageState extends State<NotePage> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, ScrollController> _noteScrollControllers = {}; // Store controllers per note
+
   late String _folderName;
   final Set<int> _expandedNotes = {};
+
   @override
   void initState() {
     super.initState();
     _folderName = widget.folderName;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        // Safe to use _scrollController.offset or _scrollController.position
+      }
+    });
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose(); // Properly dispose to prevent memory leaks
+    super.dispose();
+  }
   void shareAsText(BuildContext context, String title, String description) {
     final contentToShare = "Title: $title\n\nDescription:\n$description";
     Share.share(contentToShare, subject: title);
@@ -172,6 +186,7 @@ class _NotePageState extends State<NotePage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -209,12 +224,19 @@ class _NotePageState extends State<NotePage> {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is NotesLoaded) {
                 return ListView.builder(
+                  controller: _scrollController, // Attach the controller here
                   itemCount: state.notes.length,
                   itemBuilder: (context, index) {
-                    final ScrollController noteScrollController = ScrollController();
+
 
                     final note = state.notes[index];
-                    final isExpanded = _expandedNotes.contains(note['id']);
+                    final noteId = note['id'];
+
+                    if (!_noteScrollControllers.containsKey(noteId)) {
+                      _noteScrollControllers[noteId] = ScrollController();
+                    }
+                    final noteScrollController = _noteScrollControllers[noteId]!;
+                    final isExpanded = _expandedNotes.contains(noteId);
                     return Card(
                       color: theme.cardColor,
                       elevation: 10,
@@ -240,7 +262,7 @@ class _NotePageState extends State<NotePage> {
                                           initialTitle: note['title'],
                                           initialDescription:
                                               note['description'],
-                                          initialScrollOffset: noteScrollController.offset-30,
+                                          initialScrollOffset: noteScrollController.hasClients ? noteScrollController.offset : 0.0,
                                         ),
                                       ),
                                     );
