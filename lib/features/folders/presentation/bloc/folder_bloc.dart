@@ -15,12 +15,23 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> {
   FolderBloc(this.localDataSource) : super(FolderLoading()) {
     // Event to load folders
     on<LoadFolders>((event, emit) async {
-
       emit(FolderLoading());
       try {
+        // Fetch folders from the local data source
         final folders = await localDataSource.getFolders();
-        _allFolders = folders; // Store all folders for search
-        emit(FolderLoaded(folders));
+
+        // Make a mutable copy of the folders list
+        final sortedFolders = List<Map<String, dynamic>>.from(folders);
+
+        // Sort the folders alphabetically by name with null safety
+        sortedFolders.sort((a, b) {
+          final nameA = (a['name'] ?? '').toString().toLowerCase();
+          final nameB = (b['name'] ?? '').toString().toLowerCase();
+          return nameA.compareTo(nameB);
+        });
+
+        // Emit the sorted folders
+        emit(FolderLoaded(sortedFolders));
       } catch (e) {
         debugPrint('Error in FolderBloc loading folders: $e');
         emit(const FolderError('Failed to load folders'));
