@@ -215,124 +215,127 @@ class _NotePageState extends State<NotePage> {
 
                     final note = state.notes[index];
                     final isExpanded = _expandedNotes.contains(note['id']);
-                    return Card(
-                      color: theme.cardColor,
-                      elevation: 10,
-                      child: Column(
-                        children: [
-                          ListTile(
-                            title: Text(
-                              note['title'],
-                              style: theme.textTheme.bodyLarge,
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit,
-                                      color: theme.iconTheme.color),
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => NoteEditPage(
-                                          folderId: widget.folderId,
-                                          noteId: note['id'],
-                                          initialTitle: note['title'],
-                                          initialDescription:
-                                              note['description'],
-                                          initialScrollOffset: noteScrollController.offset-30,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    isExpanded
-                                        ? Icons.keyboard_arrow_up
-                                        : Icons.keyboard_arrow_down,
-                                    color: theme.iconTheme.color,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      if (isExpanded) {
-                                        _expandedNotes.remove(note['id']);
-                                      } else {
-                                        _expandedNotes.add(note['id']);
-                                      }
-                                    });
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete,
-                                      color: theme.iconTheme.color),
-                                  onPressed: () {
-                                    _showDeleteConfirmationDialog(
-                                        context, note['id']);
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Theme.of(context).platform ==
-                                            TargetPlatform.iOS
-                                        ? CupertinoIcons.share
-                                        : Icons.share,
-                                    color: theme.iconTheme.color,
-                                  ),
-                                  onPressed: () {
-                                    final noteTitle =
-                                        note['title'] ?? "Untitled Note";
-                                    final noteDescription =
-                                        parseDescription(note['description']);
-
-                                    // Trigger the sharing options modal
-                                    showShareOptions(
-                                        context, noteTitle, noteDescription);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (isExpanded)
-                            SizedBox(
-                              height:MediaQuery.of(context).size.height * 0.8,
-                              child: SingleChildScrollView(
-                                controller: noteScrollController,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Description:",
-                                        style: theme.textTheme.bodyMedium,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      if (note['description'] != null &&
-                                          note['description'].isNotEmpty)
-                                        quill.QuillEditor(
-                                          controller: quill.QuillController(
-                                            document: quill.Document.fromJson(
-                                              jsonDecode(note['description']),
-                                            ),
-                                            selection:
-                                                const TextSelection.collapsed(
-                                                    offset: 0),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Card(
+                        color: theme.cardColor,
+                        elevation: 10,
+                        child: Column(
+                          children: [
+                            ListTile(
+                              title: Text(
+                                note['title'],
+                                style: theme.textTheme.bodyLarge,
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit,
+                                        color: theme.iconTheme.color),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => NoteEditPage(
+                                            folderId: widget.folderId,
+                                            noteId: note['id'],
+                                            initialTitle: note['title'],
+                                            initialDescription:
+                                                note['description'],
+                                            initialScrollOffset: noteScrollController.offset-30,
                                           ),
-                                          focusNode: FocusNode(),
-                                          scrollController: ScrollController(),
-                                        )
-                                      else
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      isExpanded
+                                          ? Icons.keyboard_arrow_up
+                                          : Icons.keyboard_arrow_down,
+                                      color: theme.iconTheme.color,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        if (isExpanded) {
+                                          _expandedNotes.remove(note['id']);
+                                        } else {
+                                          _expandedNotes.add(note['id']);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete,
+                                        color: theme.iconTheme.color),
+                                    onPressed: () {
+                                      _showDeleteConfirmationDialog(
+                                          context, note['id']);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Theme.of(context).platform ==
+                                              TargetPlatform.iOS
+                                          ? CupertinoIcons.share
+                                          : Icons.share,
+                                      color: theme.iconTheme.color,
+                                    ),
+                                    onPressed: () {
+                                      final noteTitle =
+                                          note['title'] ?? "Untitled Note";
+                                      final noteDescription =
+                                          parseDescription(note['description']);
+
+                                      // Trigger the sharing options modal
+                                      showShareOptions(
+                                          context, noteTitle, noteDescription);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isExpanded)
+                              SizedBox(
+                                height:MediaQuery.of(context).size.height * 0.8,
+                                child: SingleChildScrollView(
+                                  controller: noteScrollController,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
                                         Text(
-                                          'No description available.',
+                                          "Description:",
                                           style: theme.textTheme.bodyMedium,
                                         ),
-                                    ],
+                                        const SizedBox(height: 8),
+                                        if (note['description'] != null &&
+                                            note['description'].isNotEmpty)
+                                          quill.QuillEditor(
+                                            controller: quill.QuillController(
+                                              document: quill.Document.fromJson(
+                                                jsonDecode(note['description']),
+                                              ),
+                                              selection:
+                                                  const TextSelection.collapsed(
+                                                      offset: 0),
+                                            ),
+                                            focusNode: FocusNode(),
+                                            scrollController: ScrollController(),
+                                          )
+                                        else
+                                          Text(
+                                            'No description available.',
+                                            style: theme.textTheme.bodyMedium,
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
