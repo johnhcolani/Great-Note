@@ -16,13 +16,26 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     on<LoadNotes>((event, emit) async {
       emit(NoteLoading());
       try {
+        // Fetch notes from the database
         final notes = await localDataSource.getNotes(event.folderId);
-        emit(NotesLoaded(notes));
+
+        // Make a mutable copy of the notes
+        final mutableNotes = List<Map<String, dynamic>>.from(notes);
+
+        // Sort the notes alphabetically by title with null safety
+        mutableNotes.sort((a, b) {
+          final titleA = (a['title'] ?? '').toString().toLowerCase();
+          final titleB = (b['title'] ?? '').toString().toLowerCase();
+          return titleA.compareTo(titleB);
+        });
+
+        emit(NotesLoaded(mutableNotes));
       } catch (e) {
         print('Error loading notes: $e');
-        emit(const NoteError('Failed to load notes'));
+        emit(NoteError('Failed to load notes: ${e.toString()}'));
       }
     });
+
 
     // Event to add a note
     on<AddNote>((event, emit) async {
