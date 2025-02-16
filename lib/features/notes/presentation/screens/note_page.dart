@@ -230,7 +230,7 @@ class _NotePageState extends State<NotePage> {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
+                                 if(isExpanded) IconButton(
                                     icon: Icon(Icons.edit,
                                         color: theme.iconTheme.color),
                                     onPressed: () {

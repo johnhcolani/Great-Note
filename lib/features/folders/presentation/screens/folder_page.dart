@@ -29,42 +29,42 @@ class _FolderPageState extends State<FolderPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  BannerAd? _bannerAd;
-  bool _isAdLoaded = false;
-  final String adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-7380986533735423/1251591272' // Test ad unit for Android
-      : 'ca-app-pub-7380986533735423/8992675455'; // Test ad unit for iOS
+  // BannerAd? _bannerAd;
+  // bool _isAdLoaded = false;
+  // final String adUnitId = Platform.isAndroid
+  //     ? 'ca-app-pub-7380986533735423/1251591272' // Test ad unit for Android
+  //     : 'ca-app-pub-7380986533735423/8992675455'; // Test ad unit for iOS
 
   @override
   void initState() {
 
-    _loadBannerAd();
+   // _loadBannerAd();
     super.initState();
   }
 
-  void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: adUnitId,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          setState(() {
-            _isAdLoaded = true; // Ad successfully loaded
-          });
-          debugPrint('Banner ad loaded successfully.');
-        },
-        onAdFailedToLoad: (ad, error) {
-          debugPrint('Failed to load banner ad: ${error.responseInfo}');
-          ad.dispose(); // Dispose of the ad object
-          // Retry loading the ad after a delay
-          Future.delayed(const Duration(seconds: 10), () {
-            _loadBannerAd();
-          });
-        },
-      ),
-    )..load(); // Load the banner ad
-  }
+  // void _loadBannerAd() {
+  //   _bannerAd = BannerAd(
+  //     adUnitId: adUnitId,
+  //     size: AdSize.banner,
+  //     request: const AdRequest(),
+  //     listener: BannerAdListener(
+  //       onAdLoaded: (ad) {
+  //         setState(() {
+  //           _isAdLoaded = true; // Ad successfully loaded
+  //         });
+  //         debugPrint('Banner ad loaded successfully.');
+  //       },
+  //       onAdFailedToLoad: (ad, error) {
+  //         debugPrint('Failed to load banner ad: ${error.responseInfo}');
+  //         ad.dispose(); // Dispose of the ad object
+  //         // Retry loading the ad after a delay
+  //         Future.delayed(const Duration(seconds: 10), () {
+  //           _loadBannerAd();
+  //         });
+  //       },
+  //     ),
+  //   )..load(); // Load the banner ad
+  // }
 
 
 
@@ -73,7 +73,7 @@ class _FolderPageState extends State<FolderPage> {
   @override
   void dispose() {
 
-    _bannerAd?.dispose();
+   // _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -275,7 +275,7 @@ class _FolderPageState extends State<FolderPage> {
           Expanded(
             flex: 3,
             child: Visibility(
-              visible: _isAdLoaded,
+             // visible: _isAdLoaded,
               maintainSize: true,
               maintainAnimation: true,
               maintainState: true,
@@ -289,9 +289,7 @@ class _FolderPageState extends State<FolderPage> {
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
                     height: 60,
-                    child: _bannerAd != null
-                        ? AdWidget(ad: _bannerAd!)
-                        : const SizedBox(),
+
                   ),
                 ),
               ),

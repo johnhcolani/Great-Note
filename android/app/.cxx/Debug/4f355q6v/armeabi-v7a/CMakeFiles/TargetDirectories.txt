@@ -1,0 +1,2 @@
+/Users/johncolani/flutter_project_oct_24/Great-Note/android/app/.cxx/Debug/4f355q6v/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/johncolani/flutter_project_oct_24/Great-Note/android/app/.cxx/Debug/4f355q6v/armeabi-v7a/CMakeFiles/rebuild_cache.dir
