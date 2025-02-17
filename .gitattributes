@@ -1,0 +1,12 @@
+# Treat all Dart files as Dart language
+*.dart linguist-language=Dart
+
+# Ignore CMake files for language statistics
+CMakeLists.txt linguist-vendored
+*.cmake linguist-vendored
+
+# Ignore other build-related files that might be detected as primary language
+ios/** linguist-vendored
+android/** linguist-vendored
+*.h linguist-vendored
+*.cpp linguist-vendored
