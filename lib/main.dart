@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greate_note_app/core/theme/theme_bloc.dart';
 import 'package:greate_note_app/features/app_background/bloc/background_bloc.dart';
@@ -19,30 +20,49 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
 
-
   try {
     // Initialize the database
     final Database db = await AppDatabase().database;
 
     // Create the data sources
-    final FolderLocalDataSource folderLocalDataSource = FolderLocalDataSource(
-        db);
+    final FolderLocalDataSource folderLocalDataSource =
+        FolderLocalDataSource(db);
     final NoteLocalDataSource noteLocalDataSource = NoteLocalDataSource(db);
-    final backgroundLocalDataSource = BackgroundLocalDataSource();
+    final backgroundLocalDataSource = BackgroundLocalDataSource(db);
 
-    await backgroundLocalDataSource
-        .init(); // Ensure the database is initialized
+    // Create the background bloc instance once
+    final backgroundBloc = BackgroundBloc(backgroundLocalDataSource);
 
-    runApp(BlocProvider(
-      create: (context) => BackgroundBloc(backgroundLocalDataSource),
+    runApp(BlocProvider.value(
+      value: backgroundBloc,
       child: MyApp(
         folderLocalDataSource: folderLocalDataSource,
         noteLocalDataSource: noteLocalDataSource,
         backgroundLocalDataSource: backgroundLocalDataSource,
+        backgroundBloc: backgroundBloc,
       ),
     ));
   } catch (e) {
-    print("Error initializing app: $e");
+    debugPrint("Error initializing app: $e");
+    // Show error screen if initialization fails
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text('Failed to initialize app'),
+                const SizedBox(height: 8),
+                Text('Error: $e', textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -50,12 +70,14 @@ class MyApp extends StatelessWidget {
   final FolderLocalDataSource folderLocalDataSource;
   final NoteLocalDataSource noteLocalDataSource;
   final BackgroundLocalDataSource backgroundLocalDataSource;
+  final BackgroundBloc backgroundBloc;
 
   MyApp({
     super.key,
     required this.folderLocalDataSource,
     required this.noteLocalDataSource,
     required this.backgroundLocalDataSource,
+    required this.backgroundBloc,
   });
 
   @override
@@ -70,25 +92,35 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) =>
-          FolderBloc(folderLocalDataSource)
-            ..add(LoadFolders()),
+              FolderBloc(folderLocalDataSource)..add(LoadFolders()),
         ),
         BlocProvider(
           create: (context) => NoteBloc(noteLocalDataSource),
         ),
-        BlocProvider(
-          create: (context) => BackgroundBloc(backgroundLocalDataSource),
+        BlocProvider.value(
+          value: backgroundBloc,
         ),
       ],
-      child: BlocBuilder<ThemeBloc, ThemeState>(
-        builder: (context, state) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Folder and Notes App',
-            theme: lightTheme,
-            darkTheme: darkTheme,
-            themeMode: state.themeMode,
-            home: SplashScreen(noteLocalDataSource: noteLocalDataSource),
+      child: Builder(
+        builder: (context) {
+          // Trigger background loading when the app starts
+          backgroundBloc.add(LoadBackgroundEvent());
+
+          return BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, state) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'Folder and Notes App',
+                theme: lightTheme,
+                darkTheme: darkTheme,
+                themeMode: state.themeMode,
+                localizationsDelegates: const [
+                  ...FlutterQuillLocalizations.localizationsDelegates,
+                ],
+                supportedLocales: FlutterQuillLocalizations.supportedLocales,
+                home: SplashScreen(noteLocalDataSource: noteLocalDataSource),
+              );
+            },
           );
         },
       ),
@@ -99,29 +131,26 @@ class MyApp extends StatelessWidget {
       brightness: Brightness.light,
       primarySwatch: Colors.blue,
       scaffoldBackgroundColor: Colors.white,
-      iconTheme:  IconThemeData(
-        color: Colors.blueGrey.shade500
-      ),
+      iconTheme: IconThemeData(color: Colors.blueGrey.shade500),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(color: Colors.black),
         bodyLarge: TextStyle(color: Colors.black),
       ),
       appBarTheme: const AppBarTheme(
-          color: Colors.blue, iconTheme: IconThemeData(color: Colors.white)));
+          backgroundColor: Colors.blue,
+          iconTheme: IconThemeData(color: Colors.white)));
 
   final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primarySwatch: Colors.blueGrey,
     scaffoldBackgroundColor: Colors.black,
-    iconTheme: const IconThemeData(
-        color: Colors.blueGrey
-    ),
+    iconTheme: const IconThemeData(color: Colors.blueGrey),
     textTheme: const TextTheme(
       bodyMedium: TextStyle(color: Colors.white),
       bodyLarge: TextStyle(color: Colors.white),
     ),
     appBarTheme: const AppBarTheme(
-      color: Colors.black,
+      backgroundColor: Colors.black,
       iconTheme: IconThemeData(color: Colors.white),
     ),
   );

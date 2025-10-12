@@ -16,9 +16,13 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _firstController;
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
 
-  late Animation<Offset> _firstAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -27,30 +31,48 @@ class _SplashScreenState extends State<SplashScreen>
     BlocProvider.of<SplashBloc>(context).add(StartSplash());
 
     // Initialize animation controllers
-    _firstController =
-        AnimationController(duration: const Duration(seconds: 2), vsync: this);
+    _slideController = AnimationController(
+        duration: const Duration(milliseconds: 1200), vsync: this);
+    _fadeController = AnimationController(
+        duration: const Duration(milliseconds: 800), vsync: this);
+    _scaleController = AnimationController(
+        duration: const Duration(milliseconds: 600), vsync: this);
 
-    // Define animations with offset values
-    _firstAnimation =
-        Tween<Offset>(begin: const Offset(0, -1.5), end: const Offset(0, 0.25))
+    // Define slide animation
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, -1.5), end: const Offset(0, 0.1))
             .animate(
-      CurvedAnimation(parent: _firstController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
     );
 
-    // Start all animations
-    _firstController.forward();
+    // Define fade animation
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+    );
+
+    // Define scale animation
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeOutBack),
+    );
+
+    // Start animations sequentially
+    _slideController.forward();
+    _fadeController.forward();
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _scaleController.forward();
+    });
   }
 
   @override
   void dispose() {
-    _firstController.dispose();
-
+    _slideController.dispose();
+    _fadeController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return BlocListener<SplashBloc, SplashState>(
@@ -71,13 +93,67 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             const SplashBackground(),
 
-            // First image (quill) sliding down to the center
+            // Animated logo and app name
             SlideTransition(
-              position: _firstAnimation,
-              child: Center(
-                child: SizedBox(
-                  height: screenHeight * 0.25, // 25% of screen height
-                  child: Image.asset('assets/images/quill.png'),
+              position: _slideAnimation,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Logo
+                        SizedBox(
+                          height: screenHeight * 0.25,
+                          child: Image.asset(
+                            'assets/images/quill.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // App name with gradient
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Colors.white.withOpacity(0.8),
+                            ],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Great Note',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 2,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(0, 2),
+                                  blurRadius: 8,
+                                  color: Colors.black26,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Tagline
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Text(
+                            'Capture Your Thoughts',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withOpacity(0.8),
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

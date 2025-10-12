@@ -10,10 +10,12 @@ class BackgroundBloc extends Bloc<BackgroundEvent, BackgroundState> {
   final BackgroundLocalDataSource backgroundDataSource;
 
   BackgroundBloc(this.backgroundDataSource) : super(BackgroundInitial()) {
-    // Initialize the database before using it
-    backgroundDataSource.init();
-
     on<ChangeBackgroundEvent>((event, emit) async {
+      // This event now shows a dialog to choose between camera and gallery
+      // The actual implementation will be handled in the UI layer
+    });
+
+    on<ChangeBackgroundFromGalleryEvent>((event, emit) async {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -26,6 +28,22 @@ class BackgroundBloc extends Bloc<BackgroundEvent, BackgroundState> {
         }
       } else {
         emit(BackgroundError('No image selected'));
+      }
+    });
+
+    on<ChangeBackgroundFromCameraEvent>((event, emit) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+      if (pickedFile != null) {
+        try {
+          await backgroundDataSource.saveBackgroundImage(pickedFile.path);
+          emit(BackgroundLoaded(pickedFile.path));
+        } catch (e) {
+          emit(BackgroundError('Failed to take photo: ${e.toString()}'));
+        }
+      } else {
+        emit(BackgroundError('No photo taken'));
       }
     });
 
@@ -43,4 +61,3 @@ class BackgroundBloc extends Bloc<BackgroundEvent, BackgroundState> {
     });
   }
 }
-

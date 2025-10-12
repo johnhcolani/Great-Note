@@ -1,9 +1,6 @@
-import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greate_note_app/core/theme/theme_bloc.dart';
 import 'package:greate_note_app/core/widgets/custom_floating_action_button.dart';
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
@@ -16,7 +13,6 @@ import '../bloc/folder_bloc.dart';
 import '../bloc/folder_event.dart';
 
 class FolderPage extends StatefulWidget {
-
   final NoteLocalDataSource
       noteLocalDataSource; // Pass the data source to check notes
   const FolderPage({super.key, required this.noteLocalDataSource});
@@ -27,7 +23,6 @@ class FolderPage extends StatefulWidget {
 
 class _FolderPageState extends State<FolderPage> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   // BannerAd? _bannerAd;
   // bool _isAdLoaded = false;
@@ -37,8 +32,7 @@ class _FolderPageState extends State<FolderPage> {
 
   @override
   void initState() {
-
-   // _loadBannerAd();
+    // _loadBannerAd();
     super.initState();
   }
 
@@ -66,14 +60,9 @@ class _FolderPageState extends State<FolderPage> {
   //   )..load(); // Load the banner ad
   // }
 
-
-
-
-
   @override
   void dispose() {
-
-   // _bannerAd?.dispose();
+    // _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -113,10 +102,9 @@ class _FolderPageState extends State<FolderPage> {
           ),
           IconButton(
               onPressed: () {
-                context.read<BackgroundBloc>().add(ChangeBackgroundEvent());
+                _showBackgroundSelectionDialog(context);
               },
               icon: const Icon(Icons.image)),
-
         ],
         backgroundColor: Colors.transparent, // Make AppBar transparent
         elevation: 0, // Remove shadow
@@ -129,21 +117,92 @@ class _FolderPageState extends State<FolderPage> {
                 ? Colors.black.withOpacity(0.5)
                 : Colors.white.withOpacity(0.1),
           ),
-
           Padding(
             padding: EdgeInsets.only(
-                top: MediaQuery.of(context).size.height * 0.08,
-                left: MediaQuery.of(context).size.width * 0.03,
-                right: MediaQuery.of(context).size.width * 0.03,),
+              top: MediaQuery.of(context).size.height * 0.11,
+              left: MediaQuery.of(context).size.width * 0.03,
+              right: MediaQuery.of(context).size.width * 0.03,
+            ),
             child: BlocBuilder<FolderBloc, FolderState>(
               builder: (context, state) {
-
                 if (state is FolderLoading) {
-                  return const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                      ));
+                  // Shimmer loading effect
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: getCrossAxisCount(screenWidth),
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
+                    itemCount: 6, // Show 6 skeleton cards
+                    itemBuilder: (context, index) {
+                      return Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.grey.withValues(alpha: 0.3),
+                                Colors.grey.withValues(alpha: 0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 } else if (state is FolderLoaded) {
+                  // Show empty state if no folders
+                  if (state.folders.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.folder_open,
+                            size: 80,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No folders yet',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : Colors.grey.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap the + button to create your first folder',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode
+                                  ? Colors.white54
+                                  : Colors.grey.shade600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
                   return GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: getCrossAxisCount(screenWidth),
@@ -210,13 +269,15 @@ class _FolderPageState extends State<FolderPage> {
                 right: MediaQuery.of(context).size.width * 0.03,
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10.0), // Rounded corners for the effect
+                borderRadius: BorderRadius.circular(
+                    10.0), // Rounded corners for the effect
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.white.withOpacity(0.1) // Dark mode color
                         : Colors.white.withOpacity(0.4), // Light mode color
-                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                    borderRadius:
+                        BorderRadius.circular(10.0), // Rounded corners
                     border: Border.all(
                       color: Colors.white.withOpacity(0.7), // Subtle border
                       width: 1.0,
@@ -235,13 +296,15 @@ class _FolderPageState extends State<FolderPage> {
                       hintStyle: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.grey.shade300
-                            : Colors.grey.shade700, // Adjust hint color for theme
+                            : Colors
+                                .grey.shade700, // Adjust hint color for theme
                       ),
                       prefixIcon: Icon(
                         Icons.search,
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.grey.shade300
-                            : Colors.grey.shade700, // Adjust icon color for theme
+                            : Colors
+                                .grey.shade700, // Adjust icon color for theme
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -249,16 +312,12 @@ class _FolderPageState extends State<FolderPage> {
                       ),
                     ),
                     onChanged: (query) {
-                      setState(() {
-                        _searchQuery = query;
-                      });
-                      context.read<FolderBloc>().add(SearchFolders(query: query));
+                      context
+                          .read<FolderBloc>()
+                          .add(SearchFolders(query: query));
                     },
                     onSubmitted: (query) {
                       _searchController.clear();
-                      setState(() {
-                        _searchQuery = '';
-                      });
                       context.read<FolderBloc>().add(LoadFolders());
                     },
                   ),
@@ -266,8 +325,6 @@ class _FolderPageState extends State<FolderPage> {
               ),
             ),
           ),
-
-
         ],
       ),
       floatingActionButton: Row(
@@ -275,21 +332,20 @@ class _FolderPageState extends State<FolderPage> {
           Expanded(
             flex: 3,
             child: Visibility(
-             // visible: _isAdLoaded,
+              // visible: _isAdLoaded,
               maintainSize: true,
               maintainAnimation: true,
               maintainState: true,
               child: Container(
                 height: 60,
                 decoration: const BoxDecoration(
-                   // color: Colors.yellow.withOpacity(0.5),
+                    // color: Colors.yellow.withOpacity(0.5),
                     borderRadius:
                         BorderRadius.only(topRight: Radius.circular(24))),
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
                     height: 60,
-
                   ),
                 ),
               ),
@@ -353,10 +409,11 @@ class _FolderPageState extends State<FolderPage> {
                         ),
                       ],
                     ),
-                   // const SizedBox(height: 4),
+                    // const SizedBox(height: 4),
                     Text(
                       formattedDate, // Display formatted timestamp
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -416,9 +473,9 @@ class _FolderPageState extends State<FolderPage> {
                                         child: Container(
                                           decoration: BoxDecoration(
                                               color:
-                                              Colors.white.withOpacity(0.7),
+                                                  Colors.white.withOpacity(0.7),
                                               borderRadius:
-                                              BorderRadius.circular(4.0)),
+                                                  BorderRadius.circular(4.0)),
                                           child: Padding(
                                             padding: const EdgeInsets.all(4.0),
                                             child: Text(
@@ -447,7 +504,6 @@ class _FolderPageState extends State<FolderPage> {
       ],
     );
   }
-
 
   int getCrossAxisCount(double screenWidth) {
     if (screenWidth >= 1200) {
@@ -682,8 +738,9 @@ void _showAddFolderDialog(BuildContext context) {
                     String folderName = folderNameController.text.trim();
                     if (folderName.isNotEmpty) {
                       // Capitalize the first letter of the folder name
-                      folderName = folderName[0].toUpperCase() + folderName.substring(1);
-        
+                      folderName =
+                          folderName[0].toUpperCase() + folderName.substring(1);
+
                       // Store the color as an integer value
                       context.read<FolderBloc>().add(
                             AddFolder(
@@ -721,5 +778,46 @@ Widget _colorOption(Color color, Color selectedColor, VoidCallback onTap) {
             : null,
       ),
     ),
+  );
+}
+
+// Show dialog to choose between camera and gallery for background
+void _showBackgroundSelectionDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Change Background'),
+        content: const Text('Choose how you want to set your background:'),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context
+                  .read<BackgroundBloc>()
+                  .add(ChangeBackgroundFromGalleryEvent());
+            },
+            icon: const Icon(Icons.photo_library),
+            label: const Text('Gallery'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context
+                  .read<BackgroundBloc>()
+                  .add(ChangeBackgroundFromCameraEvent());
+            },
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Camera'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+        ],
+      );
+    },
   );
 }

@@ -10,9 +10,6 @@ class AppBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dispatch the load event when the widget is built
-    context.read<BackgroundBloc>().add(LoadBackgroundEvent());
-
     return BlocBuilder<BackgroundBloc, BackgroundState>(
       builder: (context, state) {
         if (state is BackgroundLoaded) {

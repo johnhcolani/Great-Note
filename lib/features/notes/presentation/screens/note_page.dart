@@ -31,10 +31,42 @@ class NotePage extends StatefulWidget {
 class _NotePageState extends State<NotePage> {
   late String _folderName;
   final Set<int> _expandedNotes = {};
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _filteredNotes = [];
+  List<Map<String, dynamic>> _allNotes = [];
+  bool _isSearching = false;
+
   @override
   void initState() {
     super.initState();
     _folderName = widget.folderName;
+    // FIXED: Load notes once in initState instead of in build()
+    context.read<NoteBloc>().add(LoadNotes(folderId: widget.folderId));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterNotes(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredNotes = _allNotes;
+      });
+      return;
+    }
+
+    setState(() {
+      _filteredNotes = _allNotes.where((note) {
+        final title = (note['title'] ?? '').toString().toLowerCase();
+        final description = parseDescription(note['description']).toLowerCase();
+        final searchQuery = query.toLowerCase();
+
+        return title.contains(searchQuery) || description.contains(searchQuery);
+      }).toList();
+    });
   }
 
   void shareAsText(BuildContext context, String title, String description) {
@@ -42,7 +74,8 @@ class _NotePageState extends State<NotePage> {
     Share.share(contentToShare, subject: title);
   }
 
-  Future<void> shareAsPdf(BuildContext context, String title, String description) async {
+  Future<void> shareAsPdf(
+      BuildContext context, String title, String description) async {
     try {
       final pdf = pw.Document();
 
@@ -54,10 +87,12 @@ class _NotePageState extends State<NotePage> {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text("Title: $title",
-                    style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 16),
                 pw.Text("Description:",
-                    style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    style: pw.TextStyle(
+                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 8),
                 pw.Text(description, style: pw.TextStyle(fontSize: 12)),
               ],
@@ -77,14 +112,15 @@ class _NotePageState extends State<NotePage> {
         filename: "note.pdf",
       );
     } catch (e) {
-      print("Error creating or sharing PDF: $e");
+      debugPrint("Error creating or sharing PDF: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Unable to share the note as a PDF.")),
       );
     }
   }
 
-  void showShareOptions(BuildContext context, String title, String description) {
+  void showShareOptions(
+      BuildContext context, String title, String description) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -130,7 +166,6 @@ class _NotePageState extends State<NotePage> {
     );
   }
 
-
   Future<void> printNote(
       BuildContext context, String title, String description) async {
     try {
@@ -165,32 +200,184 @@ class _NotePageState extends State<NotePage> {
         },
       );
     } catch (e) {
-      print("Error during printing: $e");
+      debugPrint("Error during printing: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Unable to print the note. Please try again.")),
+        const SnackBar(
+            content: Text("Unable to print the note. Please try again.")),
       );
+    }
+  }
+
+  // Build note content with images
+  Widget _buildNoteContent(String description, ThemeData theme) {
+    try {
+      final List<dynamic> content = jsonDecode(description) as List<dynamic>;
+      final doc = quill.Document.fromJson(content);
+      final text = doc.toPlainText();
+
+      return _buildTextWithImages(text, theme);
+    } catch (e) {
+      debugPrint("Error parsing note description: $e");
+      return Text(
+        description,
+        style: theme.textTheme.bodyMedium,
+      );
+    }
+  }
+
+  // Build text content with inline images
+  Widget _buildTextWithImages(String text, ThemeData theme) {
+    final widgets = <Widget>[];
+    final imagePattern = RegExp(r'📷 ([^\n]+)');
+    int lastIndex = 0;
+
+    for (final match in imagePattern.allMatches(text)) {
+      // Add text before image
+      if (match.start > lastIndex) {
+        final textBefore = text.substring(lastIndex, match.start);
+        if (textBefore.trim().isNotEmpty) {
+          widgets.add(
+            Text(
+              textBefore,
+              style: theme.textTheme.bodyMedium,
+            ),
+          );
+        }
+      }
+
+      // Add image
+      final fileName = match.group(1)?.trim();
+      if (fileName != null) {
+        widgets.add(_buildImageWidget(fileName, theme));
+      }
+
+      lastIndex = match.end;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      final remainingText = text.substring(lastIndex);
+      if (remainingText.trim().isNotEmpty) {
+        widgets.add(
+          Text(
+            remainingText,
+            style: theme.textTheme.bodyMedium,
+          ),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets.isEmpty
+          ? [
+              Text(
+                text,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ]
+          : widgets,
+    );
+  }
+
+  // Build individual image widget for note cards
+  Widget _buildImageWidget(String fileName, ThemeData theme) {
+    return FutureBuilder<String?>(
+      future: _getImagePath(fileName),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          final imagePath = snapshot.data!;
+          if (File(imagePath).existsSync()) {
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.file(
+                  File(imagePath),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 200,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200,
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.grey.shade700
+                          : Colors.grey.shade300,
+                      child: Center(
+                        child: Icon(
+                          Icons.broken_image,
+                          size: 50,
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white54
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          }
+        }
+        return Container(
+          height: 200,
+          color: theme.brightness == Brightness.dark
+              ? Colors.grey.shade700
+              : Colors.grey.shade300,
+          child: Center(
+            child: Icon(
+              Icons.broken_image,
+              size: 50,
+              color: theme.brightness == Brightness.dark
+                  ? Colors.white54
+                  : Colors.grey.shade600,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Get full image path from filename
+  Future<String?> _getImagePath(String fileName) async {
+    try {
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      return '${appDir.path}/$fileName';
+    } catch (e) {
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    context.read<NoteBloc>().add(LoadNotes(folderId: widget.folderId));
-
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: false,
       appBar: GlossyAppBar(
         backgroundColor: Colors.transparent,
         title: _folderName,
         actions: [
           IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _filterNotes('');
+                }
+              });
+            },
+            tooltip: _isSearching ? 'Close Search' : 'Search Notes',
+          ),
+          IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
               _showEditFolderDialog(context);
             },
+            tooltip: 'Edit Folder Name',
           ),
         ],
         elevation: 0,
@@ -208,137 +395,202 @@ class _NotePageState extends State<NotePage> {
               if (state is NoteLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is NotesLoaded) {
-                return ListView.builder(
-                  itemCount: state.notes.length,
-                  itemBuilder: (context, index) {
-                    final ScrollController noteScrollController = ScrollController();
+                // Update notes lists
+                if (_allNotes != state.notes) {
+                  _allNotes = state.notes;
+                  _filteredNotes = _searchController.text.isEmpty
+                      ? state.notes
+                      : _filteredNotes;
+                }
 
-                    final note = state.notes[index];
-                    final isExpanded = _expandedNotes.contains(note['id']);
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Card(
-                        color: theme.cardColor,
-                        elevation: 10,
-                        child: Column(
-                          children: [
-                            ListTile(
-                              title: Text(
-                                note['title'],
-                                style: theme.textTheme.bodyLarge,
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                 if(isExpanded) IconButton(
-                                    icon: Icon(Icons.edit,
-                                        color: theme.iconTheme.color),
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => NoteEditPage(
-                                            folderId: widget.folderId,
-                                            noteId: note['id'],
-                                            initialTitle: note['title'],
-                                            initialDescription:
-                                                note['description'],
-                                            initialScrollOffset: noteScrollController.offset-30,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      isExpanded
-                                          ? Icons.keyboard_arrow_up
-                                          : Icons.keyboard_arrow_down,
-                                      color: theme.iconTheme.color,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        if (isExpanded) {
-                                          _expandedNotes.remove(note['id']);
-                                        } else {
-                                          _expandedNotes.add(note['id']);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete,
-                                        color: theme.iconTheme.color),
-                                    onPressed: () {
-                                      _showDeleteConfirmationDialog(
-                                          context, note['id']);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Theme.of(context).platform ==
-                                              TargetPlatform.iOS
-                                          ? CupertinoIcons.share
-                                          : Icons.share,
-                                      color: theme.iconTheme.color,
-                                    ),
-                                    onPressed: () {
-                                      final noteTitle =
-                                          note['title'] ?? "Untitled Note";
-                                      final noteDescription =
-                                          parseDescription(note['description']);
+                final notesToDisplay = _searchController.text.isEmpty
+                    ? state.notes
+                    : _filteredNotes;
 
-                                      // Trigger the sharing options modal
-                                      showShareOptions(
-                                          context, noteTitle, noteDescription);
-                                    },
-                                  ),
-                                ],
-                              ),
+                if (notesToDisplay.isEmpty) {
+                  return SafeArea(
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 80,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchController.text.isEmpty
+                                ? 'No notes yet'
+                                : 'No matching notes found',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : Colors.grey.shade700,
                             ),
-                            if (isExpanded)
-                              SizedBox(
-                                height:MediaQuery.of(context).size.height * 0.8,
-                                child: SingleChildScrollView(
-                                  controller: noteScrollController,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Description:",
-                                          style: theme.textTheme.bodyMedium,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        if (note['description'] != null &&
-                                            note['description'].isNotEmpty)
-                                          quill.QuillEditor(
-                                            controller: quill.QuillController(
-                                              document: quill.Document.fromJson(
-                                                jsonDecode(note['description']),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _searchController.text.isEmpty
+                                ? 'Tap + to add your first note'
+                                : 'Try a different search term',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode
+                                  ? Colors.white54
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SafeArea(
+                  child: ListView.builder(
+                    padding: EdgeInsets.only(
+                      top: _isSearching ? 80 : 8,
+                      bottom: 16,
+                      left: 8,
+                      right: 8,
+                    ),
+                    itemCount: notesToDisplay.length,
+                    itemBuilder: (context, index) {
+                      final ScrollController noteScrollController =
+                          ScrollController();
+
+                      final note = notesToDisplay[index];
+                      final isExpanded = _expandedNotes.contains(note['id']);
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Card(
+                          color: theme.cardColor,
+                          elevation: 10,
+                          child: Column(
+                            children: [
+                              ListTile(
+                                title: Text(
+                                  note['title'],
+                                  style: theme.textTheme.bodyLarge,
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isExpanded)
+                                      IconButton(
+                                        icon: Icon(Icons.edit,
+                                            color: theme.iconTheme.color),
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  NoteEditPage(
+                                                folderId: widget.folderId,
+                                                noteId: note['id'],
+                                                initialTitle: note['title'],
+                                                initialDescription:
+                                                    note['description'],
+                                                initialScrollOffset:
+                                                    noteScrollController
+                                                            .hasClients
+                                                        ? noteScrollController
+                                                                .offset -
+                                                            30
+                                                        : 0.0,
                                               ),
-                                              selection:
-                                                  const TextSelection.collapsed(
-                                                      offset: 0),
                                             ),
-                                            focusNode: FocusNode(),
-                                            scrollController: ScrollController(),
-                                          )
-                                        else
+                                          );
+                                        },
+                                      ),
+                                    IconButton(
+                                      icon: Icon(
+                                        isExpanded
+                                            ? Icons.keyboard_arrow_up
+                                            : Icons.keyboard_arrow_down,
+                                        color: theme.iconTheme.color,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (isExpanded) {
+                                            _expandedNotes.remove(note['id']);
+                                          } else {
+                                            _expandedNotes.add(note['id']);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.delete,
+                                          color: theme.iconTheme.color),
+                                      onPressed: () {
+                                        _showDeleteConfirmationDialog(
+                                            context, note['id']);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Theme.of(context).platform ==
+                                                TargetPlatform.iOS
+                                            ? CupertinoIcons.share
+                                            : Icons.share,
+                                        color: theme.iconTheme.color,
+                                      ),
+                                      onPressed: () {
+                                        final noteTitle =
+                                            note['title'] ?? "Untitled Note";
+                                        final noteDescription =
+                                            parseDescription(
+                                                note['description']);
+
+                                        // Trigger the sharing options modal
+                                        showShareOptions(context, noteTitle,
+                                            noteDescription);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isExpanded)
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.8,
+                                  child: SingleChildScrollView(
+                                    controller: noteScrollController,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            'No description available.',
+                                            "Description:",
                                             style: theme.textTheme.bodyMedium,
                                           ),
-                                      ],
+                                          const SizedBox(height: 8),
+                                          if (note['description'] != null &&
+                                              note['description'].isNotEmpty)
+                                            _buildNoteContent(
+                                                note['description'], theme)
+                                          else
+                                            Text(
+                                              'No description available.',
+                                              style: theme.textTheme.bodyMedium,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 );
               } else if (state is NoteError) {
                 return Center(
@@ -349,6 +601,80 @@ class _NotePageState extends State<NotePage> {
               }
             },
           ),
+          // Search bar - only visible when _isSearching is true
+          if (_isSearching)
+            Positioned(
+              top: 10,
+              left: MediaQuery.of(context).size.width * 0.03,
+              right: MediaQuery.of(context).size.width * 0.03,
+              child: SafeArea(
+                child: Container(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.white.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(10.0),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.7),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                        cursorColor: Colors.grey.shade400,
+                        decoration: InputDecoration(
+                          hintText: 'Search notes by title or content...',
+                          hintStyle: TextStyle(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey.shade300
+                                    : Colors.grey.shade700,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey.shade300
+                                    : Colors.grey.shade700,
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.grey.shade300
+                                        : Colors.grey.shade700,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _filterNotes('');
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (query) {
+                          _filterNotes(query);
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       floatingActionButton: GlossyRectangularButton(
@@ -388,7 +714,7 @@ class _NotePageState extends State<NotePage> {
         return description.trim();
       }
     } catch (e) {
-      print("Error parsing description: $e");
+      debugPrint("Error parsing description: $e");
       return "Error parsing description.";
     }
   }
@@ -522,21 +848,30 @@ class _NotePageState extends State<NotePage> {
               child: const Text('Add'),
               onPressed: () {
                 String title = titleController.text.trim();
-                title = title[0].toUpperCase() + title.substring(1);
 
-                final description = descriptionController.text.trim();
-                if (title.isNotEmpty
-                    // && description.isNotEmpty
-                    ) {
-                  context.read<NoteBloc>().add(
-                        AddNote(
-                          folderId: widget.folderId,
-                          title: title,
-                          description: description,
-                        ),
-                      );
-                  Navigator.of(context).pop(); // Close the dialog
+                // FIXED: Validate title before accessing first character
+                if (title.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter a note title'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
                 }
+
+                // Capitalize first letter
+                title = title[0].toUpperCase() + title.substring(1);
+                final description = descriptionController.text.trim();
+
+                context.read<NoteBloc>().add(
+                      AddNote(
+                        folderId: widget.folderId,
+                        title: title,
+                        description: description,
+                      ),
+                    );
+                Navigator.of(context).pop(); // Close the dialog
               },
             ),
           ],

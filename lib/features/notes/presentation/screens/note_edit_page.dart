@@ -1,11 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:greate_note_app/core/widgets/glossy_app_bar.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../bloc/note_bloc.dart';
-import 'dart:convert';
 
 class NoteEditPage extends StatefulWidget {
   final int folderId;
@@ -14,12 +16,13 @@ class NoteEditPage extends StatefulWidget {
   final String initialDescription; // This should be the Quill Delta JSON string
   final double initialScrollOffset;
 
-  const NoteEditPage({super.key, 
+  const NoteEditPage({
+    super.key,
     required this.folderId,
     required this.noteId,
     required this.initialTitle,
     required this.initialDescription,
-    this. initialScrollOffset =0,
+    this.initialScrollOffset = 0,
   });
 
   @override
@@ -29,13 +32,16 @@ class NoteEditPage extends StatefulWidget {
 class _NoteEditPageState extends State<NoteEditPage> {
   late TextEditingController _titleController;
   late ScrollController _scrollController;
+  late FocusNode _editorFocusNode;
 
   QuillController _quillController = QuillController.basic();
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController(initialScrollOffset: widget.initialScrollOffset);
+    _scrollController =
+        ScrollController(initialScrollOffset: widget.initialScrollOffset);
+    _editorFocusNode = FocusNode();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Now safe to interact with the widget
@@ -52,7 +58,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
         _quillController = quill.QuillController(
             document: doc, selection: const TextSelection.collapsed(offset: 0));
       } catch (e) {
-        print("Error decoding Quill JSON: $e");
+        debugPrint("Error decoding Quill JSON: $e");
         _quillController = quill.QuillController
             .basic(); // Fallback to empty document if decoding fails
       }
@@ -60,90 +66,384 @@ class _NoteEditPageState extends State<NoteEditPage> {
       _quillController = quill.QuillController.basic();
     }
   }
-@override
+
+  @override
   void dispose() {
-    super.dispose();
+    _titleController.dispose();
     _quillController.dispose();
     _scrollController.dispose();
+    _editorFocusNode.dispose();
+    super.dispose();
   }
+
+  // Image picker methods
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        await _insertImageToNote(image.path);
+      }
+    } catch (e) {
+      debugPrint("Error picking image from gallery: $e");
+      _showSnackBar("Failed to pick image from gallery");
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        await _insertImageToNote(image.path);
+      }
+    } catch (e) {
+      debugPrint("Error picking image from camera: $e");
+      _showSnackBar("Failed to take photo");
+    }
+  }
+
+  Future<void> _insertImageToNote(String imagePath) async {
+    try {
+      // Copy image to app directory for persistence
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String newPath = '${appDir.path}/$fileName';
+
+      await File(imagePath).copy(newPath);
+
+      // Get current cursor position, default to end of document if invalid
+      int index = _quillController.selection.baseOffset;
+      if (index < 0 || index > _quillController.document.length) {
+        index = _quillController.document.length - 1;
+      }
+
+      // Insert image reference as text at cursor position
+      final imageText = '\n📷 $fileName\n';
+      _quillController.document.insert(index, imageText);
+
+      // Move cursor after the image reference
+      final newOffset = index + imageText.length;
+      _quillController.updateSelection(
+        TextSelection.collapsed(offset: newOffset),
+        ChangeSource.local,
+      );
+
+      _showSnackBar("Image inserted at cursor position ✓");
+      debugPrint("Image saved to: $newPath at index: $index");
+    } catch (e) {
+      debugPrint("Error inserting image: $e");
+      _showSnackBar("Failed to add image: ${e.toString()}");
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // Get full image path from filename
+  Future<String?> _getImagePath(String fileName) async {
+    try {
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      return '${appDir.path}/$fileName';
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Show image gallery with all images in the note
+  void _showImageGallery() async {
+    final text = _quillController.document.toPlainText();
+    final imagePattern = RegExp(r'📷 ([^\n]+)');
+    final matches = imagePattern.allMatches(text);
+
+    if (matches.isEmpty) {
+      _showSnackBar("No images found in this note");
+      return;
+    }
+
+    final imageFiles = <String>[];
+    for (final match in matches) {
+      final fileName = match.group(1)?.trim();
+      if (fileName != null) {
+        final imagePath = await _getImagePath(fileName);
+        if (imagePath != null && File(imagePath).existsSync()) {
+          imageFiles.add(imagePath);
+        }
+      }
+    }
+
+    if (imageFiles.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ImageGalleryScreen(
+            imagePaths: imageFiles,
+          ),
+        ),
+      );
+    } else {
+      _showSnackBar("No valid images found");
+    }
+  }
+
+  // Build custom editor that shows both text and images
+  Widget _buildCustomEditor() {
+    return quill.QuillEditor.basic(
+      controller: _quillController,
+      scrollController: _scrollController,
+      focusNode: _editorFocusNode,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: GlossyAppBar(
         title: 'Edit Note',
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: _saveNote, // Save the note when pressed
+            onPressed: _saveNote,
+            tooltip: 'Save Note',
           ),
         ],
-        backgroundColor: Colors.brown.withOpacity(0.3),
+        backgroundColor: isDarkMode
+            ? Colors.blueGrey.withValues(alpha: 0.3)
+            : Colors.blue.withValues(alpha: 0.3),
         elevation: 0,
       ),
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-        
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: QuillEditor.basic(
-                      controller: _quillController,
-                    configurations: const QuillEditorConfigurations(),
-                      scrollController:
-                          ScrollController(), // Manages scrolling within the editor
-
-                      focusNode: FocusNode(), // Focus on the editor
-                    ),
+        child: Column(
+          children: [
+            // Title input with improved styling
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                border: Border(
+                  bottom: BorderSide(
+                    color: theme.dividerColor,
+                    width: 1,
                   ),
                 ),
               ),
-              SizedBox(
-                height: 155,
-                child: SingleChildScrollView(
-                  child: QuillToolbar.simple(
-                    controller: _quillController,
-                    configurations: const QuillSimpleToolbarConfigurations(
-                      showCenterAlignment: true,
-                      showJustifyAlignment: true,
-                  
-                    ),),
+              child: TextFormField(
+                controller: _titleController,
+                style: theme.textTheme.titleLarge,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: theme.textTheme.bodyMedium,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.primaryColor,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor:
+                      isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                 ),
               ),
-        
-            ],
-          ),
+            ),
+            // Editor area
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isDarkMode
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                    width: 1,
+                  ),
+                ),
+                child: _buildCustomEditor(),
+              ),
+            ),
+            // Rich Text Toolbar with improved design
+            Container(
+              height: 155,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade100,
+                border: Border(
+                  top: BorderSide(
+                    color: isDarkMode
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      quill.QuillToolbarHistoryButton(
+                        isUndo: true,
+                        controller: _quillController,
+                        options: const QuillToolbarHistoryButtonOptions(
+                          iconData: Icons.undo,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarHistoryButton(
+                        isUndo: false,
+                        controller: _quillController,
+                        options: const QuillToolbarHistoryButtonOptions(
+                          iconData: Icons.redo,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.bold,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_bold,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.italic,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_italic,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.underline,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_underline,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarClearFormatButton(
+                        controller: _quillController,
+                        options: const QuillToolbarClearFormatButtonOptions(
+                          iconData: Icons.format_clear,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarColorButton(
+                        controller: _quillController,
+                        isBackground: false,
+                        options: const QuillToolbarColorButtonOptions(
+                          iconData: Icons.color_lens,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarColorButton(
+                        controller: _quillController,
+                        isBackground: true,
+                        options: const QuillToolbarColorButtonOptions(
+                          iconData: Icons.format_color_fill,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarSelectHeaderStyleDropdownButton(
+                        controller: _quillController,
+                        options:
+                            const QuillToolbarSelectHeaderStyleDropdownButtonOptions(
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.ol,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_list_numbered,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.ul,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_list_bulleted,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.leftAlignment,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_align_left,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.centerAlignment,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_align_center,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.rightAlignment,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_align_right,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.justifyAlignment,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.format_align_justify,
+                          iconSize: 22,
+                        ),
+                      ),
+                      // Image picker buttons
+                      IconButton(
+                        onPressed: _pickImageFromGallery,
+                        icon: const Icon(Icons.photo_library, size: 22),
+                        tooltip: 'Add image from gallery',
+                      ),
+                      IconButton(
+                        onPressed: _pickImageFromCamera,
+                        icon: const Icon(Icons.camera_alt, size: 22),
+                        tooltip: 'Take photo with camera',
+                      ),
+                      IconButton(
+                        onPressed: _showImageGallery,
+                        icon: const Icon(Icons.image, size: 22),
+                        tooltip: 'View all images in note',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
-  }
-  Future<void> _onImagePickCallback() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      _quillController.document.insert(_quillController.selection.baseOffset,
-          quill.BlockEmbed.image(pickedFile.path));
-    }
-  }
-
-  Future<void> _onVideoPickCallback() async {
-    final pickedFile = await ImagePicker().pickVideo(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      _quillController.document.insert(_quillController.selection.baseOffset,
-          quill.BlockEmbed.video(pickedFile.path));
-    }
   }
 
   // Method to save the updated note
@@ -166,5 +466,234 @@ class _NoteEditPageState extends State<NoteEditPage> {
           );
       Navigator.of(context).pop(); // Go back after saving
     }
+  }
+}
+
+// Image Viewer Screen
+class ImageViewerScreen extends StatelessWidget {
+  final String imagePath;
+  final String fileName;
+
+  const ImageViewerScreen({
+    super.key,
+    required this.imagePath,
+    required this.fileName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          fileName,
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: () {
+              // TODO: Implement share functionality
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.white),
+            onPressed: () {
+              _showDeleteDialog(context);
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.file(
+            File(imagePath),
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, size: 100, color: Colors.white),
+                    SizedBox(height: 16),
+                    Text(
+                      'Image not found',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Image'),
+          content: const Text('Are you sure you want to delete this image?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                try {
+                  File(imagePath).deleteSync();
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Close image viewer
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Image deleted successfully')),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to delete image')),
+                  );
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// Image Gallery Screen
+class ImageGalleryScreen extends StatefulWidget {
+  final List<String> imagePaths;
+
+  const ImageGalleryScreen({
+    super.key,
+    required this.imagePaths,
+  });
+
+  @override
+  State<ImageGalleryScreen> createState() => _ImageGalleryScreenState();
+}
+
+class _ImageGalleryScreenState extends State<ImageGalleryScreen> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          'Image ${_currentIndex + 1} of ${widget.imagePaths.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: () {
+              // TODO: Implement share functionality
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.white),
+            onPressed: () {
+              _showDeleteDialog(context);
+            },
+          ),
+        ],
+      ),
+      body: PageView.builder(
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        itemCount: widget.imagePaths.length,
+        itemBuilder: (context, index) {
+          return Center(
+            child: InteractiveViewer(
+              child: Image.file(
+                File(widget.imagePaths[index]),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image,
+                            size: 100, color: Colors.white),
+                        SizedBox(height: 16),
+                        Text(
+                          'Image not found',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Image'),
+          content: const Text('Are you sure you want to delete this image?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                try {
+                  File(widget.imagePaths[_currentIndex]).deleteSync();
+                  Navigator.of(context).pop(); // Close dialog
+
+                  // Remove from list
+                  setState(() {
+                    widget.imagePaths.removeAt(_currentIndex);
+                    if (_currentIndex >= widget.imagePaths.length) {
+                      _currentIndex = widget.imagePaths.length - 1;
+                    }
+                  });
+
+                  // If no images left, go back
+                  if (widget.imagePaths.isEmpty) {
+                    Navigator.of(context).pop();
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Image deleted successfully')),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to delete image')),
+                  );
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

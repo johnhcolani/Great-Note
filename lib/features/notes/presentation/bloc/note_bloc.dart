@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-
+import 'package:flutter/material.dart';
 
 import '../../data/data_sources/note_local_datasource.dart';
 
@@ -31,7 +31,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
 
         emit(NotesLoaded(mutableNotes));
       } catch (e) {
-        print('Error loading notes: $e');
+        debugPrint('Error loading notes: $e');
         emit(NoteError('Failed to load notes: ${e.toString()}'));
       }
     });
@@ -47,7 +47,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         });
         add(LoadNotes(folderId: event.folderId)); // Reload notes after adding
       } catch (e) {
-        print('Error adding note: $e');
+        debugPrint('Error adding note: $e');
         emit(const NoteError('Failed to add note'));
       }
     });
@@ -58,7 +58,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         await localDataSource.deleteNote(event.noteId);
         add(LoadNotes(folderId: event.folderId)); // Reload notes after deleting
       } catch (e) {
-        print('Error deleting note: $e');
+        debugPrint('Error deleting note: $e');
         emit(const NoteError('Failed to delete note'));
       }
     });
@@ -72,7 +72,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
         });
         add(LoadNotes(folderId: event.folderId)); // Reload notes after updating
       } catch (e) {
-        print('Error updating note: $e');
+        debugPrint('Error updating note: $e');
         emit(const NoteError('Failed to update note'));
       }
     });
