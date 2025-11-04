@@ -35,6 +35,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   late FocusNode _editorFocusNode;
 
   QuillController _quillController = QuillController.basic();
+  bool _isImagesPreviewExpanded = true; // Track if images preview is expanded
 
   @override
   void initState() {
@@ -190,11 +191,339 @@ class _NoteEditPageState extends State<NoteEditPage> {
 
   // Build custom editor that shows both text and images
   Widget _buildCustomEditor() {
-    return quill.QuillEditor.basic(
-      controller: _quillController,
-      scrollController: _scrollController,
-      focusNode: _editorFocusNode,
+    // Check if document has images
+    final plainText = _quillController.document.toPlainText();
+    final imagePattern = RegExp(r'📷 ([^\n]+)');
+    final hasImages = imagePattern.hasMatch(plainText);
+
+    if (!hasImages) {
+      // No images, just use regular editor
+      return quill.QuillEditor.basic(
+        controller: _quillController,
+        scrollController: _scrollController,
+        focusNode: _editorFocusNode,
+      );
+    }
+
+    // Has images, show editor with images below
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Main editable editor
+        Expanded(
+          child: quill.QuillEditor.basic(
+            controller: _quillController,
+            scrollController: _scrollController,
+            focusNode: _editorFocusNode,
+          ),
+        ),
+        // Images preview section with collapse/expand
+        _buildImagesPreview(),
+      ],
     );
+  }
+
+  // Build images preview section with collapse/expand
+  Widget _buildImagesPreview() {
+    final plainText = _quillController.document.toPlainText();
+    final imagePattern = RegExp(r'📷 ([^\n]+)');
+    final matches = imagePattern.allMatches(plainText);
+
+    final imageFiles = <String>[];
+    for (final match in matches) {
+      final fileName = match.group(1)?.trim();
+      if (fileName != null) {
+        imageFiles.add(fileName);
+      }
+    }
+
+    if (imageFiles.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      height: _isImagesPreviewExpanded ? 220 : 50,
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey.shade800
+            : Colors.grey.shade100,
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 1,
+          ),
+        ),
+      ),
+      child: _isImagesPreviewExpanded
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with collapse button (down arrow)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Images in this note:',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isImagesPreviewExpanded = false;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Theme.of(context).iconTheme.color,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      itemCount: imageFiles.length,
+                      itemBuilder: (context, index) {
+                        return _buildImageWidgetInEditor(imageFiles[index]);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Center(
+              // Collapsed state - show expand button (up arrow)
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isImagesPreviewExpanded = true;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Images in this note (${imageFiles.length})',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.keyboard_arrow_up,
+                        color: Theme.of(context).iconTheme.color,
+                        size: 24,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  // Build image widget for editor with delete button
+  Widget _buildImageWidgetInEditor(String fileName) {
+    return FutureBuilder<String?>(
+      future: _getImagePath(fileName),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          final imagePath = snapshot.data!;
+          if (File(imagePath).existsSync()) {
+            return Container(
+              width: 200,
+              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.file(
+                      File(imagePath),
+                      fit: BoxFit.cover,
+                      height: 200,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          color: Colors.grey.shade300,
+                          child: const Center(
+                            child: Icon(Icons.broken_image, size: 50),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Delete button - positioned on top right corner
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () {
+                        debugPrint("Delete button tapped for image: $fileName");
+                        _deleteImage(fileName);
+                      },
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.red.withOpacity(0.9),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  // Delete image from document
+  void _deleteImage(String fileName) {
+    try {
+      debugPrint("Attempting to delete image: $fileName");
+
+      // Escape special regex characters in fileName
+      final escapedFileName = fileName.replaceAllMapped(
+        RegExp(r'[.*+?^${}()|[\]\\]'),
+        (match) => '\\${match.group(0)}',
+      );
+
+      // Try different patterns to find the image reference
+      final patterns = [
+        RegExp('\\n📷 $escapedFileName\\n'), // With newlines
+        RegExp('📷 $escapedFileName\\n'), // With trailing newline
+        RegExp('\\n📷 $escapedFileName'), // With leading newline
+        RegExp('📷 $escapedFileName'), // Without newlines
+      ];
+
+      final plainText = _quillController.document.toPlainText();
+      debugPrint("Document plain text length: ${plainText.length}");
+      debugPrint("Looking for: 📷 $fileName");
+
+      RegExp? matchingPattern;
+      for (final pattern in patterns) {
+        if (pattern.hasMatch(plainText)) {
+          matchingPattern = pattern;
+          debugPrint("Found image with pattern: ${pattern.pattern}");
+          break;
+        }
+      }
+
+      if (matchingPattern == null) {
+        _showSnackBar("Image not found in document");
+        debugPrint("Image pattern not found in document");
+        return;
+      }
+
+      // Find and remove the image reference from document operations
+      final delta = _quillController.document.toDelta();
+      final operations = List<Map<String, dynamic>>.from(delta.toJson());
+      final newOperations = <Map<String, dynamic>>[];
+      bool found = false;
+
+      for (final op in operations) {
+        final insert = op['insert'];
+        if (insert is String && !found) {
+          // Check if this string contains the image reference
+          final textMatch = matchingPattern.firstMatch(insert);
+
+          if (textMatch != null) {
+            // Found the image reference, remove it
+            final beforeText = insert.substring(0, textMatch.start);
+            final afterText = insert.substring(textMatch.end);
+            final newText = beforeText + afterText;
+
+            debugPrint(
+                "Removing image reference from text: ${textMatch.group(0)}");
+
+            // Only add if there's text left
+            if (newText.isNotEmpty) {
+              final newOp = <String, dynamic>{'insert': newText};
+              if (op.containsKey('attributes')) {
+                newOp['attributes'] = op['attributes'];
+              }
+              newOperations.add(newOp);
+            }
+            found = true;
+          } else {
+            // Keep the operation as-is
+            newOperations.add(Map<String, dynamic>.from(op));
+          }
+        } else {
+          // Keep non-text operations
+          newOperations.add(Map<String, dynamic>.from(op));
+        }
+      }
+
+      if (found) {
+        // Rebuild document without the image reference
+        final newDoc = quill.Document.fromJson(newOperations);
+        final currentSelection = _quillController.selection;
+
+        // Dispose old controller
+        _quillController.dispose();
+
+        // Create new controller
+        _quillController = quill.QuillController(
+          document: newDoc,
+          selection: currentSelection.baseOffset > newDoc.length
+              ? const TextSelection.collapsed(offset: 0)
+              : currentSelection,
+        );
+
+        setState(() {}); // Rebuild to update UI
+        _showSnackBar("Image removed from note");
+        debugPrint("Image successfully removed from document");
+
+        // Delete the file from storage
+        _getImagePath(fileName).then((imagePath) {
+          if (imagePath != null && File(imagePath).existsSync()) {
+            try {
+              File(imagePath).deleteSync();
+              debugPrint("Image file deleted from storage: $imagePath");
+            } catch (e) {
+              debugPrint("Error deleting image file: $e");
+            }
+          }
+        });
+      } else {
+        _showSnackBar("Image reference not found in document");
+        debugPrint("Image reference not found in operations");
+      }
+    } catch (e, stackTrace) {
+      debugPrint("Error deleting image: $e");
+      debugPrint("Stack trace: $stackTrace");
+      _showSnackBar("Failed to delete image: ${e.toString()}");
+    }
   }
 
   @override
@@ -416,6 +745,14 @@ class _NoteEditPageState extends State<NoteEditPage> {
                         controller: _quillController,
                         options: const QuillToolbarToggleStyleButtonOptions(
                           iconData: Icons.format_align_justify,
+                          iconSize: 22,
+                        ),
+                      ),
+                      quill.QuillToolbarToggleStyleButton(
+                        attribute: quill.Attribute.codeBlock,
+                        controller: _quillController,
+                        options: const QuillToolbarToggleStyleButtonOptions(
+                          iconData: Icons.code,
                           iconSize: 22,
                         ),
                       ),
